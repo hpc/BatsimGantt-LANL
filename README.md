@@ -1,2 +1,2 @@
 # batsim-gantt
-Generating gantt charts from batsim experiment outputs
+Experimenting with different ways to generate plots from batsim's job output
