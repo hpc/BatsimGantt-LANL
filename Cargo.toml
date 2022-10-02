@@ -7,4 +7,4 @@ edition = "2021"
 
 [dependencies]
 svg = "0.10.0"
-csg = "1.1"
+csv = "1.1"
