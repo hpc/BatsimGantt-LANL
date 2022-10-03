@@ -53,7 +53,7 @@ def main():
         if ranges == 1:
             # print("Starting time: " + str(row['starting_time']) + " Finish time: " + str(row['finish_time']) + " Resource block start: " + str(row['allocated_resources'].split("-")[0]) + " Resource block end: " + str(row['allocated_resources'].split("-")[1]))
             gnt.broken_barh([(int(row['starting_time']), int(row['finish_time']))],(int(row['allocated_resources'].split("-")[0]), int(row['allocated_resources'].split("-")[1])), color=cmap(int(row['requested_number_of_resources']))) #
-        # else:
+        else:
             # gnt_factory(ranges, row, gnt, cmap)
             setcolor = int(row['requested_number_of_resources'])
             i=0
