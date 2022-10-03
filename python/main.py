@@ -6,7 +6,7 @@ import random
 
 # test
 # Plot colors
-def get_cmap(n, name='hsv'):
+def get_cmap(n, name='Greys'):
     # Returns a function that maps each index in 0-n-1 to a distinct color
     return plt.cm.get_cmap(name, n)
 
@@ -64,7 +64,7 @@ def main():
 
 
     # Exports the plot
-    plt.savefig("ganttSize.svg", dpi=1200)
+    plt.savefig("ganttSizeGray.svg", dpi=1200)
 
 if __name__ == "__main__":
     main()
