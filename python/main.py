@@ -23,12 +23,12 @@ def main():
     fig, gnt = plt.subplots()
     # plt.figure(figsize(6553, 4915), dpi=100)
 
-    df = pd.read_csv('input.csv', usecols=['job_id','workload_num_machines','final_state','starting_time','finish_time','allocated_resources'])
+    df = pd.read_csv('input.csv', usecols=['job_id','workload_num_machines','final_state','starting_time','finish_time','allocated_resources', 'requested_number_of_resources'])
     starting_time = df.starting_time.min()
     finish_time = df.finish_time.max()
     workload_num_machines = df.workload_num_machines.max()
     num_jobs = df.job_id.max()
-    cmap = get_cmap(255)
+    cmap = get_cmap(1492)
 
     # Configuring the plot's bounds and axis labels
     gnt.set_ylim(0,1490)
@@ -52,10 +52,10 @@ def main():
         ranges = len(row['allocated_resources'].split(" "))
         if ranges == 1:
             # print("Starting time: " + str(row['starting_time']) + " Finish time: " + str(row['finish_time']) + " Resource block start: " + str(row['allocated_resources'].split("-")[0]) + " Resource block end: " + str(row['allocated_resources'].split("-")[1]))
-            gnt.broken_barh([(int(row['starting_time']), int(row['finish_time']))],(int(row['allocated_resources'].split("-")[0]), int(row['allocated_resources'].split("-")[1])), color=cmap(random.randint(0,254))) #
+            gnt.broken_barh([(int(row['starting_time']), int(row['finish_time']))],(int(row['allocated_resources'].split("-")[0]), int(row['allocated_resources'].split("-")[1])), color=cmap(int(row['requested_number_of_resources']))) #
         # else:
             # gnt_factory(ranges, row, gnt, cmap)
-            setcolor = random.randint(0,254)
+            setcolor = int(row['requested_number_of_resources'])
             i=0
             resource_range = row['allocated_resources'].split(" ")
             while i<ranges:
