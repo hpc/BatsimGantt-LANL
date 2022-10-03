@@ -59,12 +59,12 @@ def main():
             i=0
             resource_range = row['allocated_resources'].split(" ")
             while i<ranges:
-                gnt.broken_barh((int(row['starting_time']), int(row['finish_time'])),(int(resource_range[i].split("-")[0]), int(resource_range[i].split("-")[1])), color=cmap(setcolor))
+                gnt.broken_barh([(int(row['starting_time']), int(row['finish_time']))],(int(resource_range[i].split("-")[0]), int(resource_range[i].split("-")[1])), color=cmap(setcolor))
                 i+=1
 
 
     # Exports the plot
-    plt.savefig("gantt1.png", dpi=1200)
+    plt.savefig("ganttSize.svg", dpi=1200)
 
 if __name__ == "__main__":
     main()
