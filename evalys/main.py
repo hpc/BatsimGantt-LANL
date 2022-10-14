@@ -90,11 +90,16 @@ def main(argv):
         with open(configOut, "r") as Infile:
             OutConfig = json.load(Infile)
 
-        print(
-            str(InConfig["number-of-jobs"])
-            if dictHasKey(InConfig, "synthetic-workload")
+        # Load reservation information from jsons
+        reservationsResv1 = (
+            InConfig["reservations-resv1"]
+            if dictHasKey(InConfig, "reservations-resv1")
             else False
         )
+        reservationsArray = reservationsResv1["reservations-array"]
+        for reservation in reservationsArray:
+            print(reservation["time"])
+
         # Generate a jobset from the input CSV
 
 
