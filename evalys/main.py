@@ -75,7 +75,6 @@ def main(argv):
                     sys.exit(2)
         js = JobSet.from_csv(outJobsCSV)
         print(js.df.describe())
-        # js.df.hist() TODO What does this do?
         axe = plt.subplots()
         js.gantt(axe)
         if outputfile == "":
@@ -97,13 +96,16 @@ def main(argv):
             else False
         )
         reservationsArray = reservationsResv1["reservations-array"]
-        for reservation in reservationsArray:
-            print(reservation["time"])
+        """for reservation in reservationsArray:
+            time = reservation["time"]
+            start = reservation["start"]"""
 
         # Generate a jobset from the input CSV
+        
 
+        totaljs = JobSet.from_csv(inputpath)
 
-#        totaljs = JobSet.from_csv(inputpath)
+        # TODO Should I parse the CSV before or after the above? What if I use js.df to pull stuff from the dataframe directly?
 
 
 if __name__ == "__main__":
