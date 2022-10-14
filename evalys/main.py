@@ -2,6 +2,7 @@
 import matplotlib.pyplot as plt
 from evalys.jobset import JobSet
 import sys, getopt
+import json
 
 
 def main(argv):
@@ -13,12 +14,13 @@ def main(argv):
         opts, args = getopt.getopt(
             argv, "hi:o:r:c:", ["ifile=", "ofile=", "resv=", "conf="]
         )
+        #TODO I can totally parse the locations of both the job file and the input file from the root experiment directory. Do this.
     except getopt.GetoptError:
-        print("test.py -i <inputfile> -o <outputfile> -r <y/n> -c <config>")
+        print("main.py -i <inputfile> -o <outputfile> -r <y/n> -c <config.ini>")
         sys.exit(2)
     for opt, arg in opts:
         if opt == "-h":
-            print("test.py -i <inputfile> -o <outputfile> -r <y/n> -c <config>")
+            print("main.py -i <inputfile> -o <outputfile> -r <y/n> -c <config.ini>")
             sys.exit(2)
         elif opt in ("-i", "--ifile"):
             inputfile = arg
@@ -31,7 +33,7 @@ def main(argv):
 
     # Validate the inputs and confirm that all necessary variables have been provided before proceeding
     if inputfile == "":
-        print("test.py -i <inputfile> -o <outputfile> -r <y/n> -c <config>")
+        print("main.py -i <inputfile> -o <outputfile> -r <y/n> -c <config.ini>")
         sys.exit(2)
     if (reservation == "y" or reservation == "Y") and config == "":
         print("A value of -c must be provided when using -r!")
@@ -59,6 +61,8 @@ def main(argv):
         else:
             plt.savefig(outputfile)
     elif reservation == "y" or reservation == "Y":
+        #TODO I should probably run a check here to make sure that config is an .ini
+        OutConfig = json.load(config)
         totaljs = JobSet.from_csv(inputfile)
         print("Reservations initialized")
 
