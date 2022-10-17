@@ -12,12 +12,13 @@ Optional options:
 
 """
 
-import matplotlib.pyplot as plt
+# import matplotlib.matplotlib.pyplot as matplotlib.pyplot
+import matplotlib
+matplotlib.use('MacOSX') # Uncomment this line if you're not using macos
 from evalys.jobset import JobSet
 import sys, getopt
 import json
 import os
-
 
 def dictHasKey(myDict, key):
     if key in myDict.keys():
@@ -57,6 +58,7 @@ def main(argv):
     # Parse the path of the required files.
     # TODO Eventually make this able to operate out of the root directory.
     # TODO This should be try/excepted
+    # TODO I should also make an option so that this can just go to files in the local directory
     outJobsCSV = os.path.join(inputpath, "output", "expe-out", "out_jobs.csv")
     configIn = os.path.join(inputpath, "input", "config.ini")
     configOut = os.path.join(inputpath, "output", "config.ini")
@@ -75,12 +77,12 @@ def main(argv):
                     sys.exit(2)
         js = JobSet.from_csv(outJobsCSV)
         print(js.df.describe())
-        axe = plt.subplots()
+        axe = matplotlib.pyplot.subplots()
         js.gantt(axe)
         if outputfile == "":
-            plt.show()
+            matplotlib.pyplot.show()
         else:
-            plt.savefig(outputfile)
+            matplotlib.pyplot.savefig(outputfile)
     elif reservation == "y" or reservation == "Y":
 
         # Load the config files as a json
