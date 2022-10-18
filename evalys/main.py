@@ -13,12 +13,19 @@ Optional options:
 """
 
 # import matplotlib.matplotlib.pyplot as matplotlib.pyplot
+from tkinter import S
 import matplotlib
 matplotlib.use('MacOSX') # Uncomment this line if you're not using macos
 from evalys.jobset import JobSet
+from evalys.utils import cut_workload
+from evalys.visu.legacy import plot_gantt_general_shape, plot_gantt
+from evalys.visu.gantt import plot_diff_gantt
 import sys, getopt
 import json
 import os
+import pandas as pd
+from datetime import datetime
+import time
 
 def dictHasKey(myDict, key):
     if key in myDict.keys():
@@ -27,11 +34,28 @@ def dictHasKey(myDict, key):
         return False
 
 
+def makeReservationGantt(row, totaldf, outDir):
+    reservationStartTime = int(row["starting_time"])
+    reservationFinishTime = int(row["finish_time"])
+    windowSize = 21600 # TODO Make this not hardcoded. This value is the time in seconds of the windows before and after the reservation.
+    windowStartTime = reservationStartTime-windowSize
+    if windowStartTime<0:
+        windowStartTime = 0
+    windowFinishTime = reservationFinishTime + windowSize
+    if windowFinishTime>int(totaldf["finish_time"].max()):
+        windowFinishTime = int(totaldf["finish_time"].max())
+    # reservationDf = totaldf[(totaldf["starting_time"] >= windowStartTime) & (totaldf["finish_time"] <= windowFinishTime)]
+    cut_js = cut_workload(totaldf,windowStartTime, windowFinishTime)
+    # axe = matplotlib.pyplot.subplots()
+    # cut_js.gantt(axe)
+
+    matplotlib.pyplot.savefig(os.path.join(outDir, str("reservation",str(windowStartTime),"-",str(windowFinishTime))))
+    print("Creating gantt for reservation starting at time "+str(reservationStartTime)+" and ending at time "+str(reservationFinishTime)+" with "+str(windowSize)+" seconds before and after the reservation")
+
 def main(argv):
     inputpath = ""
     outputfile = ""
     reservation = ""
-    config = ""
 
     # Parse the arguments passed in
     try:
@@ -66,7 +90,7 @@ def main(argv):
     # If no reservations are specified, process the chart normally
     if reservation == "" or reservation == "n":
         with open(outJobsCSV) as f:
-            if sum(1 for line in f) > 20000:
+            if sum(1 for line in f) > 50000:
                 print(
                     "Creating gantt charts can be unreliable with files larger than 20k jobs. Are you use you want to continue? (Y/n)"
                 )
@@ -75,10 +99,9 @@ def main(argv):
                     pass
                 elif cont == "n":
                     sys.exit(2)
+        
         js = JobSet.from_csv(outJobsCSV)
-        print(js.df.describe())
-        axe = matplotlib.pyplot.subplots()
-        js.gantt(axe)
+        plot_gantt(js, title='Gantt chart')
         if outputfile == "":
             matplotlib.pyplot.show()
         else:
@@ -98,16 +121,18 @@ def main(argv):
             else False
         )
         reservationsArray = reservationsResv1["reservations-array"]
-        """for reservation in reservationsArray:
-            time = reservation["time"]
-            start = reservation["start"]"""
 
         # Generate a jobset from the input CSV
-        
+        totaljs = JobSet.from_csv(outJobsCSV)
+        totaldf = totaljs.df
 
-        totaljs = JobSet.from_csv(inputpath)
+        # make a directory to dump the output files into
+        outDir = str(InConfig["batsched-policy"])+"-"+str(InConfig["nodes"])+datetime.now().strftime("%H:%M:%S")
+        os.mkdir(outDir)
 
-        # TODO Should I parse the CSV before or after the above? What if I use js.df to pull stuff from the dataframe directly?
+        for index, row in totaldf.iterrows():
+            if (row["purpose"] == "reservation"):
+                makeReservationGantt(row, totaldf, outDir)
 
 
 if __name__ == "__main__":
