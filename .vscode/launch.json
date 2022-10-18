@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": ["-i/Users/vhafener/experiments/test_resv_3/base/experiment_1/id_2/Run_1"],
+            "args": ["-i/Users/vhafener/experiments/test_resv_3/base/experiment_1/id_2/Run_1","-ry"],
             "justMyCode": true
         }
     ]

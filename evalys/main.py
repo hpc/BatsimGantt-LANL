@@ -18,8 +18,8 @@ import matplotlib
 matplotlib.use('MacOSX') # Uncomment this line if you're not using macos
 from evalys.jobset import JobSet
 from evalys.utils import cut_workload
-from evalys.visu.legacy import plot_gantt_general_shape, plot_gantt
-from evalys.visu.gantt import plot_diff_gantt
+from evalys.visu.legacy import plot_gantt_general_shape, plot_gantt # TODO I should probably pull in plot_gantt from the below instead
+from evalys.visu.gantt import plot_gantt_df
 import sys, getopt
 import json
 import os
@@ -34,7 +34,7 @@ def dictHasKey(myDict, key):
         return False
 
 
-def makeReservationGantt(row, totaldf, outDir):
+def makeReservationGantt(row, totaldf, outDir, res_bounds):
     reservationStartTime = int(row["starting_time"])
     reservationFinishTime = int(row["finish_time"])
     windowSize = 21600 # TODO Make this not hardcoded. This value is the time in seconds of the windows before and after the reservation.
@@ -46,11 +46,12 @@ def makeReservationGantt(row, totaldf, outDir):
         windowFinishTime = int(totaldf["finish_time"].max())
     # reservationDf = totaldf[(totaldf["starting_time"] >= windowStartTime) & (totaldf["finish_time"] <= windowFinishTime)]
     cut_js = cut_workload(totaldf,windowStartTime, windowFinishTime)
-    # axe = matplotlib.pyplot.subplots()
-    # cut_js.gantt(axe)
-
-    matplotlib.pyplot.savefig(os.path.join(outDir, str("reservation",str(windowStartTime),"-",str(windowFinishTime))))
+    # TODO Extract the reservation bounds from the jobset here and insert
+    plot_gantt_df(cut_js['workload'], res_bounds, title='Gantt chart')
+    matplotlib.pyplot.show()
+    # matplotlib.pyplot.savefig(os.path.join(outDir, str("reservation",str(windowStartTime),"-",str(windowFinishTime))))
     print("Creating gantt for reservation starting at time "+str(reservationStartTime)+" and ending at time "+str(reservationFinishTime)+" with "+str(windowSize)+" seconds before and after the reservation")
+    sys.exit(2) # TODO Remove
 
 def main(argv):
     inputpath = ""
@@ -129,10 +130,9 @@ def main(argv):
         # make a directory to dump the output files into
         outDir = str(InConfig["batsched-policy"])+"-"+str(InConfig["nodes"])+datetime.now().strftime("%H:%M:%S")
         os.mkdir(outDir)
-
         for index, row in totaldf.iterrows():
             if (row["purpose"] == "reservation"):
-                makeReservationGantt(row, totaldf, outDir)
+                makeReservationGantt(row, totaldf, outDir, totaljs.res_bounds)
 
 
 if __name__ == "__main__":
