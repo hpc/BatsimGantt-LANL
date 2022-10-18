@@ -37,7 +37,7 @@ def dictHasKey(myDict, key):
 def makeReservationGantt(row, totaldf, outDir, res_bounds):
     reservationStartTime = int(row["starting_time"])
     reservationFinishTime = int(row["finish_time"])
-    windowSize = 21600 # TODO Make this not hardcoded. This value is the time in seconds of the windows before and after the reservation.
+    windowSize = 86400 # TODO Make this not hardcoded. This value is the time in seconds of the windows before and after the reservation.
     windowStartTime = reservationStartTime-windowSize
     if windowStartTime<0:
         windowStartTime = 0
@@ -47,10 +47,12 @@ def makeReservationGantt(row, totaldf, outDir, res_bounds):
     # reservationDf = totaldf[(totaldf["starting_time"] >= windowStartTime) & (totaldf["finish_time"] <= windowFinishTime)]
     cut_js = cut_workload(totaldf,windowStartTime, windowFinishTime)
     # TODO Extract the reservation bounds from the jobset here and insert
-    plot_gantt_df(cut_js['workload'], res_bounds, title='Gantt chart')
-    matplotlib.pyplot.show()
-    # matplotlib.pyplot.savefig(os.path.join(outDir, str("reservation",str(windowStartTime),"-",str(windowFinishTime))))
-    print("Creating gantt for reservation starting at time "+str(reservationStartTime)+" and ending at time "+str(reservationFinishTime)+" with "+str(windowSize)+" seconds before and after the reservation")
+    plot_gantt_df(cut_js['workload'], res_bounds, title=str("Gantt for reservation starting at time "+str(reservationStartTime)+" and ending at time "+str(reservationFinishTime)+" with "+str(windowSize)+" seconds before and after the reservation"))
+    if outDir == "":
+        matplotlib.pyplot.show()
+    else:
+        matplotlib.pyplot.savefig(os.path.join(outDir))
+        # matplotlib.pyplot.savefig(os.path.join(outDir, str("reservation",str(windowStartTime),"-",str(windowFinishTime))))
     sys.exit(2) # TODO Remove
 
 def main(argv):
@@ -128,8 +130,11 @@ def main(argv):
         totaldf = totaljs.df
 
         # make a directory to dump the output files into
-        outDir = str(InConfig["batsched-policy"])+"-"+str(InConfig["nodes"])+datetime.now().strftime("%H:%M:%S")
-        os.mkdir(outDir)
+        if outputfile != "":
+            outDir = str(InConfig["batsched-policy"])+"-"+str(InConfig["nodes"])+datetime.now().strftime("%H:%M:%S")
+            os.mkdir(outDir)
+        else:
+            outDir=""
         for index, row in totaldf.iterrows():
             if (row["purpose"] == "reservation"):
                 makeReservationGantt(row, totaldf, outDir, totaljs.res_bounds)
