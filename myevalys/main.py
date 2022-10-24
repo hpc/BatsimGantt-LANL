@@ -35,6 +35,7 @@ def plotReservationGantt(row, totaldf, outDir, res_bounds):
     reservationStartTime = int(row["starting_time"])
     reservationFinishTime = int(row["finish_time"])
     reservationExecTime = int(row["execution_time"])
+    reservationInterval = row["allocated_resources"]
     windowSize = 169200 # TODO Make this not hardcoded. This value is the time in seconds of the windows before and after the reservation.
     windowStartTime = reservationStartTime-windowSize
     if windowStartTime<0:
@@ -49,7 +50,7 @@ def plotReservationGantt(row, totaldf, outDir, res_bounds):
     #     writer.writeheader()
     #     for data in cut_js:
     #         writer.writerow(data)
-    plot_gantt_df(cut_js['workload'], res_bounds, title=str("Reservation from  "+str(reservationStartTime)+"-"+str(reservationFinishTime)+"+-"+str(windowSize)+"S"), resvStart=reservationStartTime,resvExecTime=reservationExecTime)
+    plot_gantt_df(cut_js['workload'], res_bounds, title=str("Reservation from  "+str(reservationStartTime)+"-"+str(reservationFinishTime)+"+-"+str(windowSize)+"S"), resvStart=reservationStartTime,resvExecTime=reservationExecTime,resvNodes=reservationInterval)
     matplotlib.pyplot.savefig(os.path.join(outDir, str("reservation")+str(windowStartTime)+"-"+str(windowFinishTime)), dpi=1000)
     print("Saved figure to: " + os.path.join(outDir, str("reservation")+str(windowStartTime)+"-"+str(windowFinishTime)))
 
