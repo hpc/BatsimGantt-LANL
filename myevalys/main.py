@@ -22,6 +22,7 @@ import sys, getopt
 import json
 import os
 from datetime import datetime
+import csv
 
 def dictHasKey(myDict, key):
     if key in myDict.keys():
@@ -33,6 +34,7 @@ def dictHasKey(myDict, key):
 def plotReservationGantt(row, totaldf, outDir, res_bounds):
     reservationStartTime = int(row["starting_time"])
     reservationFinishTime = int(row["finish_time"])
+    reservationExecTime = int(row["execution_time"])
     windowSize = 169200 # TODO Make this not hardcoded. This value is the time in seconds of the windows before and after the reservation.
     windowStartTime = reservationStartTime-windowSize
     if windowStartTime<0:
@@ -41,8 +43,15 @@ def plotReservationGantt(row, totaldf, outDir, res_bounds):
     if windowFinishTime>int(totaldf["finish_time"].max()):
         windowFinishTime = int(totaldf["finish_time"].max())
     cut_js = cut_workload(totaldf,windowStartTime, windowFinishTime) # This is what results in the final crop of the images, it does some cropping of jobs IIRC
-    plot_gantt_df(cut_js['workload'], res_bounds, title=str("Reservation from  "+str(reservationStartTime)+"-"+str(reservationFinishTime)+"+-"+str(windowSize)+"S"))
+    # csv_columns = ['job_id',	'workload_name',	'workload_num_machines',	'profile',	'submission_time',	'requested_number_of_resources',	'requested_time',	'success',	'final_state',	'starting_time',	'execution_time',	'finish_time',	'waiting_time',	'turnaround_time',	'stretch',	'allocated_resources',	'purpose',	'checkpoint_interval',	'dump_time',	'read_time',	'MTBF',	'SMTBF',	'fixed-failures',	'repair-time',	'Tc_Error',	'delay', 'real_delay', 'cpu',	'real_cpu', 'consumed_energy',	'metadata', 'batsim_metadata']
+    # with open(os.path.join(outDir, str("reservation-dataframe-")+str(windowStartTime)+"-"+str(windowFinishTime)+".csv")) as csvfile:
+    #     writer = csv.DictWriter(csvfile,fieldname=csv_columns)
+    #     writer.writeheader()
+    #     for data in cut_js:
+    #         writer.writerow(data)
+    plot_gantt_df(cut_js['workload'], res_bounds, title=str("Reservation from  "+str(reservationStartTime)+"-"+str(reservationFinishTime)+"+-"+str(windowSize)+"S"), resvStart=reservationStartTime,resvExecTime=reservationExecTime)
     matplotlib.pyplot.savefig(os.path.join(outDir, str("reservation")+str(windowStartTime)+"-"+str(windowFinishTime)), dpi=1000)
+    print("Saved figure to: " + os.path.join(outDir, str("reservation")+str(windowStartTime)+"-"+str(windowFinishTime)))
 
 def main(argv):
     inputpath = ""
