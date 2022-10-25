@@ -13,16 +13,20 @@ Optional options:
 """
 
 import matplotlib
-matplotlib.use('MacOSX') # Comment this line if you're not using macos
+
+matplotlib.use("MacOSX")  # Comment this line if you're not using macos
 from evalys.jobset import JobSet
 from evalys.utils import cut_workload
-from evalys.visu.legacy import plot_gantt # TODO I should probably pull in plot_gantt from the below instead
+from evalys.visu.legacy import (
+    plot_gantt,
+)  # TODO I should probably pull in plot_gantt from the below instead
 from evalys.visu.gantt import plot_gantt_df
 import sys, getopt
 import json
 import os
 from datetime import datetime
 from yaspin import yaspin
+
 
 def dictHasKey(myDict, key):
     if key in myDict.keys():
@@ -36,86 +40,210 @@ def plotReservationGantt(row, totaldf, outDir, res_bounds, verbosity, maxJobLen)
     reservationFinishTime = int(row["finish_time"])
     reservationExecTime = int(row["execution_time"])
     reservationInterval = row["allocated_resources"]
-    if verbosity==True:
-        print("\nReservation start: "+str(reservationStartTime)+"\nReservation finish: "+str(reservationFinishTime)+"\nReservationExecTime: "+str(reservationExecTime)+"\nReservationInterval: "+str(reservationInterval))
-    windowSize = 169200 # TODO Make this not hardcoded. This value is the time in seconds of the windows before and after the reservation.
-    windowStartTime = reservationStartTime-windowSize
-    if windowStartTime<0:
+    if verbosity == True:
+        print(
+            "\nReservation start: "
+            + str(reservationStartTime)
+            + "\nReservation finish: "
+            + str(reservationFinishTime)
+            + "\nReservationExecTime: "
+            + str(reservationExecTime)
+            + "\nReservationInterval: "
+            + str(reservationInterval)
+        )
+    windowSize = 169200
+    windowStartTime = reservationStartTime - windowSize
+    if windowStartTime < 0:
         windowStartTime = 0
     windowFinishTime = reservationFinishTime + windowSize
-    if windowFinishTime>int(totaldf["finish_time"].max()):
+    if windowFinishTime > int(totaldf["finish_time"].max()):
         windowFinishTime = int(totaldf["finish_time"].max())
-    cut_js = cut_workload(totaldf,windowStartTime-maxJobLen, windowFinishTime+maxJobLen) # This is what results in the final crop of the images, it does some cropping of jobs IIRC
+    cut_js = cut_workload(
+        totaldf, windowStartTime - maxJobLen, windowFinishTime + maxJobLen
+    )
     if verbosity == True:
-        # print(cut_js['running'].empty)
         print(cut_js)
-    # if (cut_js['running'].empty and includeEmpty == None):
-    #     inVal = input("This dataset includes empty dataframes, with only a reservation inside them. Do you still want to generate charts for these empty frames? This can take some time. Default is no. (y/n)")
-    #     inVal = inVal.lower
-    #     if inVal == "y":
-    #         includeEmpty=True
-    #     else:
-    #         includeEmpty=False
-    # elif (cut_js['running'].empty and includeEmpty == False):
-    #     pass
-    plot_gantt_df(cut_js['workload'], res_bounds, windowStartTime,windowFinishTime,title=str("Reservation from  "+str(reservationStartTime)+"-"+str(reservationFinishTime)+"+-"+str(windowSize)+"S"), resvStart=reservationStartTime,resvExecTime=reservationExecTime,resvNodes=reservationInterval)
-    matplotlib.pyplot.savefig(os.path.join(outDir, str("reservation")+str(windowStartTime)+"-"+str(windowFinishTime)), dpi=1000)
+    plot_gantt_df(
+        cut_js["workload"],
+        res_bounds,
+        windowStartTime,
+        windowFinishTime,
+        title=str(
+            "Reservation from  "
+            + str(reservationStartTime)
+            + "-"
+            + str(reservationFinishTime)
+            + "+-"
+            + str(windowSize)
+            + "S"
+        ),
+        resvStart=reservationStartTime,
+        resvExecTime=reservationExecTime,
+        resvNodes=reservationInterval,
+    )
+    matplotlib.pyplot.savefig(
+        os.path.join(
+            outDir,
+            str("reservation") + str(windowStartTime) + "-" + str(windowFinishTime),
+        ),
+        dpi=1000,
+    )
     matplotlib.pyplot.close()
-    print("\nSaved figure to: " + os.path.join(outDir, str("reservation")+str(windowStartTime)+"-"+str(windowFinishTime)))
+    print(
+        "\nSaved figure to: "
+        + os.path.join(
+            outDir,
+            str("reservation") + str(windowStartTime) + "-" + str(windowFinishTime),
+        )
+    )
+
+
+def plotBinnedGanttReservations(row, totaldf, outDir, res_bounds, verbosity, maxJobLen):
+    reservationStartTime = int(row["starting_time"])
+    reservationFinishTime = int(row["finish_time"])
+    reservationExecTime = int(row["execution_time"])
+    reservationInterval = row["allocated_resources"]
+    if verbosity == True:
+        print(
+            "\nReservation start: "
+            + str(reservationStartTime)
+            + "\nReservation finish: "
+            + str(reservationFinishTime)
+            + "\nReservationExecTime: "
+            + str(reservationExecTime)
+            + "\nReservationInterval: "
+            + str(reservationInterval)
+        )
+    windowSize = 169200
+    windowStartTime = reservationStartTime - windowSize
+    if windowStartTime < 0:
+        windowStartTime = 0
+    windowFinishTime = reservationFinishTime + windowSize
+    if windowFinishTime > int(totaldf["finish_time"].max()):
+        windowFinishTime = int(totaldf["finish_time"].max())
+    cut_js = cut_workload(
+        totaldf, windowStartTime - maxJobLen, windowFinishTime + maxJobLen
+    )
+    if verbosity == True:
+        print(cut_js)
+
+    smallDf, longDf, largeDf = binDf(cut_js)
+    outPath = os.path.join(
+        outDir, str("BIN-" + str(windowStartTime) + str(windowFinishTime))
+    )
+    os.mkdir(outPath)
+    saveDfPlot(smallDf, getFileName("smallDf", outPath))
+    saveDfPlot(longDf, getFileName("longDf", outPath))
+    saveDfPlot(largeDf, getFileName("largeDf", outPath))
+
+
+def binDf(df):
+    smallDf = df.loc[
+        (df["requested_resources"] <= 32) & (df["execution_time"] <= 28800)
+    ]
+    longDf = df.loc[(df["requested_resources"] <= 32) & (df["execution_time"] > 28800)]
+    largeDf = df.loc[(df["requested_resources"] > 32)]
+    return smallDf, longDf, largeDf
+
+
+def saveDfPlot(df, outfile):
+    df.plot(with_details=True)
+    matplotlib.pyplot.savefig(
+        outfile,
+        dpi=1000,
+    )
+    matplotlib.pyplot.close()
+
+
+def getFileName(name, outPath):
+    return os.path.join(outPath, name)
+
+
+def loadConfigs(inputpath):
+    configIn = os.path.join(inputpath, "input", "config.ini")
+    configOut = os.path.join(inputpath, "output", "config.ini")
+    with yaspin().line as sp:
+        sp.text = "Loading config files as JSON"
+        try:
+            with open(configIn, "r") as InFile:
+                InConfig = json.load(InFile)
+            with open(configOut, "r") as Infile:
+                OutConfig = json.load(Infile)
+        except:
+            print(
+                "Error! Config files not found! Make sure you're starting from the Run_1 directory."
+            )
+            sys.exit(2)
+        return InConfig, OutConfig
+
+
+def getOutputDir(InConfig, outputfile):
+    with yaspin().line as sp:
+        sp.text = "Determining output folder"
+        folderNameOut = (
+            str(InConfig["batsched-policy"])
+            + "-"
+            + str(InConfig["nodes"])
+            + datetime.now().strftime("%H:%M:%S")
+        )
+        if outputfile == "":
+            outDir = folderNameOut
+        else:
+            outDir = os.path.join(outputfile, folderNameOut)
+    return outDir
+
 
 def main(argv):
     inputpath = ""
     outputfile = ""
-    reservation = ""
-    verbosity= False
-    includeEmpty = None
+    reservation = False
+    verbosity = False
+    binned = False
 
     # Parse the arguments passed in
     try:
-        opts, args = getopt.getopt(argv, "hi:o:r:v:", ["ipath=", "ofile=", "resv=", "verbosity=", "empty="])
+        opts, args = getopt.getopt(
+            argv, "hi:o:r:v:", ["ipath=", "ofile=", "resv=", "verbosity=", "binned="]
+        )
     except getopt.GetoptError:
-        print("python3 main.py -i <inputpath> [-o <outputfile>] [-r <y/n>] [-v <y/n>] [-e <y/n>]")
+        print(
+            "python3 main.py -i <inputpath> [-o <outputfile>] [-r <y/N>] [-v <y/N>] [-b <y/N]"
+        )
         sys.exit(2)
     for opt, arg in opts:
         if opt == "-h":
-            print("python3 main.py -i <inputpath> [-o <outputfile>] [-r <y/n>] [-v <y/n>] [-e <y/n>]")
+            print(
+                "python3 main.py -i <inputpath> [-o <outputfile>] [-r <y/N>] [-v <y/N>] [-b <y/N]"
+            )
             sys.exit(2)
         elif opt in ("-i", "--ipath"):
-            inputpath = arg
+            if arg == "":
+                print(
+                    "python3 main.py -i <inputpath> [-o <outputfile>] [-r <y/N>] [-v <y/N>] [-b <y/N]"
+                )
+                sys.exit(2)
+            else:
+                inputpath = arg
         elif opt in ("-o", "--ofile"):
             outputfile = arg
         elif opt in ("-r", "--resv"):
-            reservation = arg
+            if arg.lower() == "y":
+                reservation = True
         elif opt in ("-v", "--verbosity"):
-            verbosity = arg
-        elif opt in ("e", "--empty"):
-            val = arg.lower
-            if val == "y":
-                includeEmpty=True
-            elif val == "n":
-                includeEmpty=False
-            else:
-                print("python3 main.py -i <inputpath> [-o <outputfile>] [-r <y/n>] [-v <y/n>] [-e <y/n>]")
-                sys.exit(2)
-    
-    if verbosity == "y" or verbosity == "Y":
-        verbosity=True
-
-    # Validate the inputs and confirm that all necessary variables have been provided before proceeding
-    if inputpath == "":
-        print("python3 main.py -i <inputpath> [-o <outputfile>] [-r <y/n>] [-v <y/n>]")
-        sys.exit(2)
+            if arg.lower() == "y":
+                verbosity = True
+        elif opt in ("-b", "--binned"):
+            if arg.lower() == "y":
+                binned = True
 
     # Parse the path of the required files.
     # TODO Eventually make this able to operate out of the root directory.
     # TODO This should be try/excepted
     # TODO I should also make an option so that this can just go to files in the local directory
     outJobsCSV = os.path.join(inputpath, "output", "expe-out", "out_jobs.csv")
-    configIn = os.path.join(inputpath, "input", "config.ini")
-    configOut = os.path.join(inputpath, "output", "config.ini")
 
     # If no reservations are specified, process the chart normally
-    if reservation == "" or reservation == "n":
+    if not reservation:
         with open(outJobsCSV) as f:
             if sum(1 for line in f) > 70000:
                 print(
@@ -126,32 +254,18 @@ def main(argv):
                     pass
                 elif cont == "n":
                     sys.exit(2)
-        
+
         js = JobSet.from_csv(outJobsCSV)
-        plot_gantt(js, title='Gantt chart')
+        plot_gantt(js, title="Gantt chart")
         if outputfile == "":
             matplotlib.pyplot.show()
         else:
             matplotlib.pyplot.savefig(outputfile)
 
-    elif reservation == "y" or reservation == "Y":
-        with yaspin().line as sp:
-            sp.text = "Loading config files as JSON"
-            try:
-                with open(configIn, "r") as InFile:
-                    InConfig = json.load(InFile)
-                with open(configOut, "r") as Infile:
-                    OutConfig = json.load(Infile)
-            except:
-                print("Error! Config files not found! Make sure you're starting from the Run_1 directory.")
-                sys.exit(2)
-        with yaspin().line as sp:
-            sp.text = "Determining output folder"
-            folderNameOut = str(InConfig["batsched-policy"])+"-"+str(InConfig["nodes"])+datetime.now().strftime("%H:%M:%S")
-            if (outputfile == ""):
-                outDir = folderNameOut
-            else:
-                outDir = os.path.join (outputfile, folderNameOut)
+    elif reservation and not binned:
+        InConfig, OutConfig = loadConfigs(inputpath)
+        outDir = getOutputDir(InConfig, outputfile)
+
         with yaspin().line as sp:
             sp.text = "Creating jobset from out_jobs.csv"
             try:
@@ -160,17 +274,34 @@ def main(argv):
                 print("Error! CSV File is empty!")
                 sys.exit(2)
             totaldf = totaljs.df
-        maxJobLen = totaldf['execution_time'].max()
-        print("Maximum job length parsed as: "+str(maxJobLen))
+        maxJobLen = totaldf["execution_time"].max()
+        print("Maximum job length parsed as: " + str(maxJobLen))
         os.mkdir(outDir)
         for index, row in totaldf.iterrows():
-            if (row["purpose"] == "reservation"):
+            if row["purpose"] == "reservation":
                 with yaspin().line as sp:
-                    sp.text = "Plotting gantt chart for reservation from:"+str(row["starting_time"])+" to "+str(row["finish_time"])
+                    sp.text = (
+                        "Plotting gantt chart for reservation from:"
+                        + str(row["starting_time"])
+                        + " to "
+                        + str(row["finish_time"])
+                    )
                     try:
-                        plotReservationGantt(row, totaldf, outDir, totaljs.res_bounds, verbosity, maxJobLen)
+                        plotReservationGantt(
+                            row,
+                            totaldf,
+                            outDir,
+                            totaljs.res_bounds,
+                            verbosity,
+                            maxJobLen,
+                        )
                     except Exception as e:
                         print(e)
+    elif reservation and binned:
+        pass
+    else:
+        print("Incompatible options entered! Please try again")
+        sys.exit(2)
 
 
 if __name__ == "__main__":
