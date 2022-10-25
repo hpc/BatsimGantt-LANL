@@ -190,7 +190,63 @@ def getOutputDir(InConfig, outputfile):
             outDir = folderNameOut
         else:
             outDir = os.path.join(outputfile, folderNameOut)
+    os.mkdir(outDir)
     return outDir
+
+
+def dfFromCsv(outJobsCSV):
+    with yaspin().line as sp:
+        sp.text = "Creating jobset from out_jobs.csv"
+        try:
+            totaljs = JobSet.from_csv(outJobsCSV)
+        except:
+            print("Error! CSV File is empty!")
+            sys.exit(2)
+    return totaljs.df, totaljs
+
+
+def getMaxJobLen(totaldf):
+    maxJobLen = totaldf["execution_time"].max()
+    print("Maximum job length parsed as: " + str(maxJobLen))
+    return maxJobLen
+
+
+def iterateReservations(inputpath, outputfile, outJobsCSV, verbosity, binned=False):
+    InConfig, OutConfig = loadConfigs(inputpath)
+    outDir = getOutputDir(InConfig, outputfile)
+    totaldf, totaljs = dfFromCsv(outJobsCSV)
+    maxJobLen = getMaxJobLen(totaldf)
+
+    for index, row in totaldf.iterrows():
+        if row["purpose"] == "reservation":
+            with yaspin().line as sp:
+                sp.text = (
+                    "Plotting gantt chart for reservation from:"
+                    + str(row["starting_time"])
+                    + " to "
+                    + str(row["finish_time"])
+                )
+                try:
+                    if not binned:
+                        plotReservationGantt(
+                            row,
+                            totaldf,
+                            outDir,
+                            totaljs.res_bounds,
+                            verbosity,
+                            maxJobLen,
+                        )
+                    elif binned:
+                        plotBinnedGanttReservations(
+                            row,
+                            totaldf,
+                            outDir,
+                            totaljs.res_bounds,
+                            verbosity,
+                            maxJobLen,
+                        )
+                except Exception as e:
+                    print(e)
 
 
 def main(argv):
@@ -262,43 +318,9 @@ def main(argv):
         else:
             matplotlib.pyplot.savefig(outputfile)
 
-    elif reservation and not binned:
-        InConfig, OutConfig = loadConfigs(inputpath)
-        outDir = getOutputDir(InConfig, outputfile)
+    elif reservation:
+        iterateReservations(inputpath, outputfile, outJobsCSV, verbosity, binned)
 
-        with yaspin().line as sp:
-            sp.text = "Creating jobset from out_jobs.csv"
-            try:
-                totaljs = JobSet.from_csv(outJobsCSV)
-            except:
-                print("Error! CSV File is empty!")
-                sys.exit(2)
-            totaldf = totaljs.df
-        maxJobLen = totaldf["execution_time"].max()
-        print("Maximum job length parsed as: " + str(maxJobLen))
-        os.mkdir(outDir)
-        for index, row in totaldf.iterrows():
-            if row["purpose"] == "reservation":
-                with yaspin().line as sp:
-                    sp.text = (
-                        "Plotting gantt chart for reservation from:"
-                        + str(row["starting_time"])
-                        + " to "
-                        + str(row["finish_time"])
-                    )
-                    try:
-                        plotReservationGantt(
-                            row,
-                            totaldf,
-                            outDir,
-                            totaljs.res_bounds,
-                            verbosity,
-                            maxJobLen,
-                        )
-                    except Exception as e:
-                        print(e)
-    elif reservation and binned:
-        pass
     else:
         print("Incompatible options entered! Please try again")
         sys.exit(2)
