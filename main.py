@@ -127,7 +127,7 @@ def plotBinnedGanttReservations(row, totaldf, outDir, res_bounds, verbosity, max
     if verbosity == True:
         print(cut_js)
 
-    smallDf, longDf, largeDf = binDf(cut_js)
+    smallDf, longDf, largeDf = binDf(cut_js["workload"])
     outPath = os.path.join(
         outDir, str("BIN-" + str(windowStartTime) + str(windowFinishTime))
     )
@@ -139,15 +139,16 @@ def plotBinnedGanttReservations(row, totaldf, outDir, res_bounds, verbosity, max
 
 def binDf(df):
     smallDf = df.loc[
-        (df["requested_resources"] <= 32) & (df["execution_time"] <= 28800)
+        (df["requested_number_of_resources"] <= 32) & (df["execution_time"] <= 28800)
     ]
-    longDf = df.loc[(df["requested_resources"] <= 32) & (df["execution_time"] > 28800)]
-    largeDf = df.loc[(df["requested_resources"] > 32)]
+    longDf = df.loc[(df["requested_number_of_resources"] <= 32) & (df["execution_time"] > 28800)]
+    largeDf = df.loc[(df["requested_number_of_resources"] > 32)]
     return smallDf, longDf, largeDf
 
 
 def saveDfPlot(df, outfile):
-    df.plot(with_details=True)
+    js = JobSet.from_df(df)
+    js.plot(with_details=True)
     matplotlib.pyplot.savefig(
         outfile,
         dpi=1000,
@@ -226,27 +227,27 @@ def iterateReservations(inputpath, outputfile, outJobsCSV, verbosity, binned=Fal
                     + " to "
                     + str(row["finish_time"])
                 )
-                try:
-                    if not binned:
-                        plotReservationGantt(
-                            row,
-                            totaldf,
-                            outDir,
-                            totaljs.res_bounds,
-                            verbosity,
-                            maxJobLen,
-                        )
-                    elif binned:
-                        plotBinnedGanttReservations(
-                            row,
-                            totaldf,
-                            outDir,
-                            totaljs.res_bounds,
-                            verbosity,
-                            maxJobLen,
-                        )
-                except Exception as e:
-                    print(e)
+                # try:
+                if not binned:
+                    plotReservationGantt(
+                        row,
+                        totaldf,
+                        outDir,
+                        totaljs.res_bounds,
+                        verbosity,
+                        maxJobLen,
+                    )
+                elif binned:
+                    plotBinnedGanttReservations(
+                        row,
+                        totaldf,
+                        outDir,
+                        totaljs.res_bounds,
+                        verbosity,
+                        maxJobLen,
+                    )
+                # except Exception as e:
+                #     print(e)
 
 
 def main(argv):
@@ -259,7 +260,7 @@ def main(argv):
     # Parse the arguments passed in
     try:
         opts, args = getopt.getopt(
-            argv, "hi:o:r:v:", ["ipath=", "ofile=", "resv=", "verbosity=", "binned="]
+            argv, "hi:o:r:v:b:", ["ipath=", "ofile=", "resv=", "verbosity=", "binned="]
         )
     except getopt.GetoptError:
         print(
