@@ -132,9 +132,9 @@ def plotBinnedGanttReservations(row, totaldf, outDir, res_bounds, verbosity, max
         outDir, str("BIN-" + str(windowStartTime) + str(windowFinishTime))
     )
     os.mkdir(outPath)
-    saveDfPlot(smallDf, getFileName("smallDf", outPath))
-    saveDfPlot(longDf, getFileName("longDf", outPath))
-    saveDfPlot(largeDf, getFileName("largeDf", outPath))
+    saveDfPlot(smallDf, getFileName("smallDf", outPath), reservationStartTime, reservationExecTime, reservationInterval)
+    saveDfPlot(longDf, getFileName("longDf", outPath), reservationStartTime, reservationExecTime, reservationInterval)
+    saveDfPlot(largeDf, getFileName("largeDf", outPath), reservationStartTime, reservationExecTime, reservationInterval)
 
 
 def binDf(df):
@@ -146,9 +146,9 @@ def binDf(df):
     return smallDf, longDf, largeDf
 
 
-def saveDfPlot(df, outfile):
+def saveDfPlot(df, outfile, reservationStartTime, reservationExecTime, reservationInterval):
     js = JobSet.from_df(df)
-    js.plot(with_details=True)
+    js.plot(with_gantt=True, reservationStart=reservationStartTime, reservationExec=reservationExecTime, reservationNodes=reservationInterval)
     matplotlib.pyplot.savefig(
         outfile,
         dpi=1000,
