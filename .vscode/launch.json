@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": ["-i/Users/vhafener/experiments/Steve_reservations_90k_staggered/base/experiment_1/id_300/Run_1","-o/Users/vhafener/data/gantt/resvtest","-ry"],
+            "args": ["-i/Users/vhafener/experiments/test_resv_3/base/experiment_1/id_2/Run_1","-o/Users/vhafener/data/gantt/troubleshooting","-ry","-vy"],
             "justMyCode": true
         }
     ]

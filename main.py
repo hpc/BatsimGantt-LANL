@@ -31,11 +31,13 @@ def dictHasKey(myDict, key):
         return False
 
 
-def plotReservationGantt(row, totaldf, outDir, res_bounds):
+def plotReservationGantt(row, totaldf, outDir, res_bounds, verbosity, maxJobLen):
     reservationStartTime = int(row["starting_time"])
     reservationFinishTime = int(row["finish_time"])
     reservationExecTime = int(row["execution_time"])
     reservationInterval = row["allocated_resources"]
+    if verbosity==True:
+        print("\nReservation start: "+str(reservationStartTime)+"\nReservation finish: "+str(reservationFinishTime)+"\nReservationExecTime: "+str(reservationExecTime)+"\nReservationInterval: "+str(reservationInterval))
     windowSize = 169200 # TODO Make this not hardcoded. This value is the time in seconds of the windows before and after the reservation.
     windowStartTime = reservationStartTime-windowSize
     if windowStartTime<0:
@@ -43,8 +45,20 @@ def plotReservationGantt(row, totaldf, outDir, res_bounds):
     windowFinishTime = reservationFinishTime + windowSize
     if windowFinishTime>int(totaldf["finish_time"].max()):
         windowFinishTime = int(totaldf["finish_time"].max())
-    cut_js = cut_workload(totaldf,windowStartTime, windowFinishTime) # This is what results in the final crop of the images, it does some cropping of jobs IIRC
-    plot_gantt_df(cut_js['workload'], res_bounds, title=str("Reservation from  "+str(reservationStartTime)+"-"+str(reservationFinishTime)+"+-"+str(windowSize)+"S"), resvStart=reservationStartTime,resvExecTime=reservationExecTime,resvNodes=reservationInterval)
+    cut_js = cut_workload(totaldf,windowStartTime-maxJobLen, windowFinishTime+maxJobLen) # This is what results in the final crop of the images, it does some cropping of jobs IIRC
+    if verbosity == True:
+        # print(cut_js['running'].empty)
+        print(cut_js)
+    # if (cut_js['running'].empty and includeEmpty == None):
+    #     inVal = input("This dataset includes empty dataframes, with only a reservation inside them. Do you still want to generate charts for these empty frames? This can take some time. Default is no. (y/n)")
+    #     inVal = inVal.lower
+    #     if inVal == "y":
+    #         includeEmpty=True
+    #     else:
+    #         includeEmpty=False
+    # elif (cut_js['running'].empty and includeEmpty == False):
+    #     pass
+    plot_gantt_df(cut_js['workload'], res_bounds, windowStartTime,windowFinishTime,title=str("Reservation from  "+str(reservationStartTime)+"-"+str(reservationFinishTime)+"+-"+str(windowSize)+"S"), resvStart=reservationStartTime,resvExecTime=reservationExecTime,resvNodes=reservationInterval)
     matplotlib.pyplot.savefig(os.path.join(outDir, str("reservation")+str(windowStartTime)+"-"+str(windowFinishTime)), dpi=1000)
     matplotlib.pyplot.close()
     print("\nSaved figure to: " + os.path.join(outDir, str("reservation")+str(windowStartTime)+"-"+str(windowFinishTime)))
@@ -53,16 +67,18 @@ def main(argv):
     inputpath = ""
     outputfile = ""
     reservation = ""
+    verbosity= False
+    includeEmpty = None
 
     # Parse the arguments passed in
     try:
-        opts, args = getopt.getopt(argv, "hi:o:r:c:", ["ipath=", "ofile=", "resv="])
+        opts, args = getopt.getopt(argv, "hi:o:r:v:", ["ipath=", "ofile=", "resv=", "verbosity=", "empty="])
     except getopt.GetoptError:
-        print("python3 main.py -i <inputpath> [-o <outputfile>] [-r <y/n>]")
+        print("python3 main.py -i <inputpath> [-o <outputfile>] [-r <y/n>] [-v <y/n>] [-e <y/n>]")
         sys.exit(2)
     for opt, arg in opts:
         if opt == "-h":
-            print("python3 main.py -i <inputpath> [-o <outputfile>] [-r <y/n>]")
+            print("python3 main.py -i <inputpath> [-o <outputfile>] [-r <y/n>] [-v <y/n>] [-e <y/n>]")
             sys.exit(2)
         elif opt in ("-i", "--ipath"):
             inputpath = arg
@@ -70,10 +86,24 @@ def main(argv):
             outputfile = arg
         elif opt in ("-r", "--resv"):
             reservation = arg
+        elif opt in ("-v", "--verbosity"):
+            verbosity = arg
+        elif opt in ("e", "--empty"):
+            val = arg.lower
+            if val == "y":
+                includeEmpty=True
+            elif val == "n":
+                includeEmpty=False
+            else:
+                print("python3 main.py -i <inputpath> [-o <outputfile>] [-r <y/n>] [-v <y/n>] [-e <y/n>]")
+                sys.exit(2)
+    
+    if verbosity == "y" or verbosity == "Y":
+        verbosity=True
 
     # Validate the inputs and confirm that all necessary variables have been provided before proceeding
     if inputpath == "":
-        print("python3 main.py -i <inputpath> [-o <outputfile>] [-r <y/n>]")
+        print("python3 main.py -i <inputpath> [-o <outputfile>] [-r <y/n>] [-v <y/n>]")
         sys.exit(2)
 
     # Parse the path of the required files.
@@ -130,12 +160,17 @@ def main(argv):
                 print("Error! CSV File is empty!")
                 sys.exit(2)
             totaldf = totaljs.df
+        maxJobLen = totaldf['execution_time'].max()
+        print("Maximum job length parsed as: "+str(maxJobLen))
         os.mkdir(outDir)
         for index, row in totaldf.iterrows():
             if (row["purpose"] == "reservation"):
                 with yaspin().line as sp:
                     sp.text = "Plotting gantt chart for reservation from:"+str(row["starting_time"])+" to "+str(row["finish_time"])
-                    plotReservationGantt(row, totaldf, outDir, totaljs.res_bounds)
+                    try:
+                        plotReservationGantt(row, totaldf, outDir, totaljs.res_bounds, verbosity, maxJobLen)
+                    except Exception as e:
+                        print(e)
 
 
 if __name__ == "__main__":
