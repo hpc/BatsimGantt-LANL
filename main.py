@@ -1,7 +1,7 @@
 # coding: utf-8
 """
 Usage:
-    python3 main.py -i <inputpath> [-o <outputfile>] [-r <y/n>]
+    python3 main.py -i <inputpath> [-o <outputfile>] [-r <y/N>] [-v <y/N>] [-b <y/N]
 
 Required Options:
     -i <inputpath>    The run directory of the experiment. Eventually this will be the experiment's root directory. Try to use absolute paths, for some reason this doesnt like ~ for homedirs
@@ -9,9 +9,12 @@ Required Options:
 Optional options:
     -o <outputfile>    Prompts this program to output the gantt chart to a file instead of showing it to you via the matplotlib viewer. Be careful with this, as it can make large charts unusable
     -r <y/n>    Prompts this program to look for and utilize reservations when creating the output charts 
+    -v <y/N>    verbose operation.
+    -b <y/N>    Bin reservations by size
 
 """
 
+from cgitb import small
 import matplotlib
 
 matplotlib.use("MacOSX")  # Comment this line if you're not using macos
@@ -19,7 +22,7 @@ from evalys.jobset import JobSet
 from evalys.utils import cut_workload
 from evalys.visu.legacy import (
     plot_gantt,
-)  # TODO I should probably pull in plot_gantt from the below instead
+)
 from evalys.visu.gantt import plot_gantt_df
 import sys, getopt
 import json
@@ -127,33 +130,115 @@ def plotBinnedGanttReservations(row, totaldf, outDir, res_bounds, verbosity, max
     if verbosity == True:
         print(cut_js)
 
-    smallDf, longDf, largeDf = binDf(cut_js["workload"])
+    smallJs, longJs, largeJs = binDfToJs(cut_js["workload"])
     outPath = os.path.join(
         outDir, str("BIN-" + str(windowStartTime) + str(windowFinishTime))
     )
     os.mkdir(outPath)
-    saveDfPlot(smallDf, getFileName("smallDf", outPath), reservationStartTime, reservationExecTime, reservationInterval)
-    saveDfPlot(longDf, getFileName("longDf", outPath), reservationStartTime, reservationExecTime, reservationInterval)
-    saveDfPlot(largeDf, getFileName("largeDf", outPath), reservationStartTime, reservationExecTime, reservationInterval)
+    # saveTriplePlot(cut_js, outPath, reservationStartTime,reservationExecTime, reservationInterval)
+    saveDfPlot(
+        smallJs,
+        getFileName("smallJs", outPath),
+        reservationStartTime,
+        reservationExecTime,
+        reservationInterval,
+        longJs=longJs,
+        largeJs=largeJs,
+        windowStartTime=windowStartTime,
+        windowFinishtime=windowFinishTime,
+        binned=True,
+    )
+    # saveDfPlot(
+    #     longJs,
+    #     getFileName("longJs", outPath),
+    #     reservationStartTime,
+    #     reservationExecTime,
+    #     reservationInterval,
+    #     windowStartTime=windowStartTime,
+    #     windowFinishtime=windowFinishTime,
+    # )
+    # saveDfPlot(
+    #     largeJs,
+    #     getFileName("largeJs", outPath),
+    #     reservationStartTime,
+    #     reservationExecTime,
+    #     reservationInterval,
+    #     windowStartTime=windowStartTime,
+    #     windowFinishtime=windowFinishTime,
+    # )
 
 
-def binDf(df):
+def binDfToJs(df):
     smallDf = df.loc[
         (df["requested_number_of_resources"] <= 32) & (df["execution_time"] <= 28800)
     ]
-    longDf = df.loc[(df["requested_number_of_resources"] <= 32) & (df["execution_time"] > 28800)]
+    smallJs = JobSet.from_df(smallDf)
+    longDf = df.loc[
+        (df["requested_number_of_resources"] <= 32) & (df["execution_time"] > 28800)
+    ]
+    longJs = JobSet.from_df(longDf)
     largeDf = df.loc[(df["requested_number_of_resources"] > 32)]
-    return smallDf, longDf, largeDf
+    largeJs = JobSet.from_df(largeDf)
+    return smallJs, longJs, largeJs
 
 
-def saveDfPlot(df, outfile, reservationStartTime, reservationExecTime, reservationInterval):
-    js = JobSet.from_df(df)
-    js.plot(with_gantt=True, reservationStart=reservationStartTime, reservationExec=reservationExecTime, reservationNodes=reservationInterval)
+def saveDfPlot(
+    js,
+    outfile,
+    reservationStartTime,
+    reservationExecTime,
+    reservationInterval,
+    longJs=None,
+    largeJs=None,
+    windowStartTime=None,
+    windowFinishtime=None,
+    binned=False,
+):
+    js.plot(
+        with_gantt=True,
+        longJs=longJs,
+        largeJs=largeJs,
+        reservationStart=reservationStartTime,
+        reservationExec=reservationExecTime,
+        reservationNodes=reservationInterval,
+        windowStartTime=windowStartTime,
+        windowFinishTime=windowFinishtime,
+        binned=binned,
+    )
     matplotlib.pyplot.savefig(
         outfile,
         dpi=1000,
     )
     matplotlib.pyplot.close()
+
+
+# def saveTriplePlot(
+#     cut_js, outPath, reservationStartTime, reservationExecTime, reservationInterval
+# ):
+#     smallJs, longJs, largeJs = binDfToJs(cut_js["workload"])
+#     smallJs.plot(
+#         with_gantt=True,
+#         reservationStart=reservationStartTime,
+#         reservationExec=reservationExecTime,
+#         reservationNodes=reservationInterval,
+#     )
+#     longJs.plot(
+#         with_gantt=True,
+#         reservationStart=reservationStartTime,
+#         reservationExec=reservationExecTime,
+#         reservationNodes=reservationInterval,
+#     )
+#     largeJs.plot(
+#         with_gantt=True,
+#         reservationStart=reservationStartTime,
+#         reservationExec=reservationExecTime,
+#         reservationNodes=reservationInterval,
+#     )
+#     matplotlib.pyplot.savefig(
+#         getFileName("TriplePlot", outPath),
+#         dpi=1000,
+#     )
+#     matplotlib.pyplot.close()
 
 
 def getFileName(name, outPath):
