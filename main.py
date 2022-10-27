@@ -14,7 +14,6 @@ Optional options:
 
 """
 
-from cgitb import small
 import matplotlib
 
 matplotlib.use("MacOSX")  # Comment this line if you're not using macos
@@ -148,24 +147,6 @@ def plotBinnedGanttReservations(row, totaldf, outDir, res_bounds, verbosity, max
         windowFinishtime=windowFinishTime,
         binned=True,
     )
-    # saveDfPlot(
-    #     longJs,
-    #     getFileName("longJs", outPath),
-    #     reservationStartTime,
-    #     reservationExecTime,
-    #     reservationInterval,
-    #     windowStartTime=windowStartTime,
-    #     windowFinishtime=windowFinishTime,
-    # )
-    # saveDfPlot(
-    #     largeJs,
-    #     getFileName("largeJs", outPath),
-    #     reservationStartTime,
-    #     reservationExecTime,
-    #     reservationInterval,
-    #     windowStartTime=windowStartTime,
-    #     windowFinishtime=windowFinishTime,
-    # )
 
 
 def binDfToJs(df):
@@ -207,38 +188,9 @@ def saveDfPlot(
     )
     matplotlib.pyplot.savefig(
         outfile,
-        dpi=1000,
+        dpi=300,
     )
     matplotlib.pyplot.close()
-
-
-# def saveTriplePlot(
-#     cut_js, outPath, reservationStartTime, reservationExecTime, reservationInterval
-# ):
-#     smallJs, longJs, largeJs = binDfToJs(cut_js["workload"])
-#     smallJs.plot(
-#         with_gantt=True,
-#         reservationStart=reservationStartTime,
-#         reservationExec=reservationExecTime,
-#         reservationNodes=reservationInterval,
-#     )
-#     longJs.plot(
-#         with_gantt=True,
-#         reservationStart=reservationStartTime,
-#         reservationExec=reservationExecTime,
-#         reservationNodes=reservationInterval,
-#     )
-#     largeJs.plot(
-#         with_gantt=True,
-#         reservationStart=reservationStartTime,
-#         reservationExec=reservationExecTime,
-#         reservationNodes=reservationInterval,
-#     )
-#     matplotlib.pyplot.savefig(
-#         getFileName("TriplePlot", outPath),
-#         dpi=1000,
-#     )
-#     matplotlib.pyplot.close()
 
 
 def getFileName(name, outPath):
