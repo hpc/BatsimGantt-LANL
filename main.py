@@ -29,29 +29,38 @@ def main(argv):
     verbosity = False
     binned = False
     average = False
+    bubble = False
 
     # Parse the arguments passed in
     try:
         opts, args = getopt.getopt(
             argv,
-            "hi:o:r:v:b:a:",
-            ["ipath=", "ofile=", "resv=", "verbosity=", "binned=", "average="],
+            "hi:o:r:v:b:a:s:",
+            [
+                "ipath=",
+                "ofile=",
+                "resv=",
+                "verbosity=",
+                "binned=",
+                "average=",
+                "bubble=",
+            ],
         )
     except getopt.GetoptError:
         print(
-            "Option error! See usage below:\npython3 main.py -i <inputpath> [-o <outputfile>] [-r <y/N>] [-v <y/N>] [-b <y/N>] [-a <y/N>]"
+            "Option error! See usage below:\npython3 main.py -i <inputpath> [-o <outputfile>] [-r <y/N>] [-v <y/N>] [-b <y/N>] [-a <y/N>] [-s <y/N>]"
         )
         sys.exit(2)
     for opt, arg in opts:
         if opt == "-h":
             print(
-                "Help menu:\npython3 main.py -i <inputpath> [-o <outputfile>] [-r <y/N>] [-v <y/N>] [-b <y/N] [-a <y/N>]"
+                "Help menu:\npython3 main.py -i <inputpath> [-o <outputfile>] [-r <y/N>] [-v <y/N>] [-b <y/N] [-a <y/N>] [-s <y/N>]"
             )
             sys.exit(2)
         elif opt in ("-i", "--ipath"):
             if arg == "":
                 print(
-                    "python3 main.py -i <inputpath> [-o <outputfile>] [-r <y/N>] [-v <y/N>] [-b <y/N] [-a <y/N>]\n Please supply an input path!"
+                    "python3 main.py -i <inputpath> [-o <outputfile>] [-r <y/N>] [-v <y/N>] [-b <y/N] [-a <y/N>] [-s <y/N>]\n Please supply an input path!"
                 )
                 sys.exit(2)
             else:
@@ -70,6 +79,9 @@ def main(argv):
         elif opt in ("-a", "--average"):
             if arg.lower() == "y":
                 average = True
+        elif opt in ("-s", "--bubble"):
+            if arg.lower() == "y":
+                bubble = True
 
     # Parse the path of the required files.
     outJobsCSV = os.path.join(inputpath, "output", "expe-out", "out_jobs.csv")
@@ -79,7 +91,9 @@ def main(argv):
         plotSimpleGantt(outJobsCSV, outputfile)
 
     elif reservation and not average:
-        iterateReservations(inputpath, outputfile, outJobsCSV, verbosity, binned)
+        iterateReservations(
+            inputpath, outputfile, outJobsCSV, verbosity, binned, bubble
+        )
 
     elif reservation and average:
         chartRunningAverage(inputpath, outputfile, outJobsCSV)

@@ -1,5 +1,7 @@
 from utils import *
+from gantt import *
 import matplotlib
+import seaborn as sns
 
 matplotlib.use("MacOSX")  # Comment this line if you're not using macos
 
@@ -54,3 +56,63 @@ def chartRunningAverage(inputpath, outputfile, outJobsCSV):
     )
     matplotlib.pyplot.close()
     print("\nSaved figure to: " + outfile)
+
+
+def plotBubbleChart(row, totaldf, outDir, res_bounds, verbosity, maxJobLen):
+    """
+    Plots a bubble chart for each reservation based on the given parameters
+    """
+    reservationStartTime = int(row["starting_time"])
+    reservationFinishTime = int(row["finish_time"])
+    reservationExecTime = int(row["execution_time"])
+    reservationInterval = row["allocated_resources"]
+
+    windowSize = 169200
+    windowStartTime = reservationStartTime - windowSize
+    if windowStartTime < 0:
+        windowStartTime = 0
+    windowFinishTime = reservationFinishTime + windowSize
+    if windowFinishTime > int(totaldf["finish_time"].max()):
+        windowFinishTime = int(totaldf["finish_time"].max())
+
+    outFile = os.path.join(
+        outDir,
+        str("reservation") + str(windowStartTime) + "-" + str(windowFinishTime),
+    )
+
+    cut_js = cut_workload(
+        totaldf, windowStartTime - maxJobLen, windowFinishTime + maxJobLen
+    )
+
+    if cut_js["workload"].empty:
+        print(
+            "Empty dataframe! Skipping reservation from: "
+            + str(reservationStartTime)
+            + "-"
+            + str(reservationFinishTime)
+        )
+    else:
+        sns.scatterplot(
+            data=cut_js["workload"],
+            x="starting_time",
+            y="execution_time",
+            size="requested_number_of_resources",
+            legend=False,
+            sizes=(20, 2000),
+        ).set(
+            title=str(
+                "Reservation from  "
+                + str(reservationStartTime)
+                + "-"
+                + str(reservationFinishTime)
+                + "+-"
+                + str(windowSize)
+                + "S"
+            ),
+        )
+        matplotlib.pyplot.savefig(
+            outFile,
+            dpi=300,
+        )
+        matplotlib.pyplot.close()
+        print("\nSaved figure to: " + outFile)
