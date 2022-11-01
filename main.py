@@ -14,24 +14,12 @@ Optional options:
 
 """
 
-from evalys.jobset import JobSet
-from evalys.utils import cut_workload
-from evalys.visu.legacy import (
-    plot_gantt,
-)
-from evalys.visu.gantt import plot_gantt_df
+
 import sys, getopt
-import json
 import os
 from utils import *
 from gantt import *
 from plots import *
-from datetime import datetime
-from yaspin import yaspin
-import pandas as pd
-import matplotlib
-
-matplotlib.use("MacOSX")  # Comment this line if you're not using macos
 
 
 def main(argv):
