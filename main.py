@@ -15,8 +15,7 @@ Optional options:
 """
 
 
-import sys, getopt
-import os
+import sys, getopt, os
 from utils import *
 from gantt import *
 from plots import *
@@ -30,12 +29,13 @@ def main(argv):
     binned = False
     average = False
     bubble = False
+    area = False
 
     # Parse the arguments passed in
     try:
         opts, args = getopt.getopt(
             argv,
-            "hi:o:r:v:b:a:s:",
+            "hi:o:r:v:b:a:s:n:",
             [
                 "ipath=",
                 "ofile=",
@@ -44,23 +44,24 @@ def main(argv):
                 "binned=",
                 "average=",
                 "bubble=",
+                "area=",
             ],
         )
     except getopt.GetoptError:
         print(
-            "Option error! See usage below:\npython3 main.py -i <inputpath> [-o <outputfile>] [-r <y/N>] [-v <y/N>] [-b <y/N>] [-a <y/N>] [-s <y/N>]"
+            "Option error! See usage below:\npython3 main.py -i <inputpath> [-o <outputfile>] [-r <y/N>] [-v <y/N>] [-b <y/N>] [-a <y/N>] [-s <y/N>] [-n <y/N>]"
         )
         sys.exit(2)
     for opt, arg in opts:
         if opt == "-h":
             print(
-                "Help menu:\npython3 main.py -i <inputpath> [-o <outputfile>] [-r <y/N>] [-v <y/N>] [-b <y/N] [-a <y/N>] [-s <y/N>]"
+                "Help menu:\npython3 main.py -i <inputpath> [-o <outputfile>] [-r <y/N>] [-v <y/N>] [-b <y/N] [-a <y/N>] [-s <y/N>] [-n <y/N>]"
             )
             sys.exit(2)
         elif opt in ("-i", "--ipath"):
             if arg == "":
                 print(
-                    "python3 main.py -i <inputpath> [-o <outputfile>] [-r <y/N>] [-v <y/N>] [-b <y/N] [-a <y/N>] [-s <y/N>]\n Please supply an input path!"
+                    "python3 main.py -i <inputpath> [-o <outputfile>] [-r <y/N>] [-v <y/N>] [-b <y/N] [-a <y/N>] [-s <y/N>] [-n <y/N>]\n Please supply an input path!"
                 )
                 sys.exit(2)
             else:
@@ -82,6 +83,9 @@ def main(argv):
         elif opt in ("-s", "--bubble"):
             if arg.lower() == "y":
                 bubble = True
+        elif opt in ("-n", "--area"):
+            if arg.lower() == "y":
+                area = True
 
     # Parse the path of the required files.
     outJobsCSV = os.path.join(inputpath, "output", "expe-out", "out_jobs.csv")
@@ -92,7 +96,7 @@ def main(argv):
 
     elif reservation and not average:
         iterateReservations(
-            inputpath, outputfile, outJobsCSV, verbosity, binned, bubble
+            inputpath, outputfile, outJobsCSV, verbosity, binned, bubble, area
         )
 
     elif reservation and average:

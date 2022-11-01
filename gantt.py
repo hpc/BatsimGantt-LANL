@@ -9,7 +9,9 @@ import matplotlib
 matplotlib.use("MacOSX")  # Comment this line if you're not using macos
 
 
-def iterateReservations(inputpath, outputfile, outJobsCSV, verbosity, binned, bubble):
+def iterateReservations(
+    inputpath, outputfile, outJobsCSV, verbosity, binned, bubble, area
+):
     """
     Iterates over reservations and plots them based on whether or not they're binned
     """
@@ -34,7 +36,7 @@ def iterateReservations(inputpath, outputfile, outJobsCSV, verbosity, binned, bu
                     + str(row["finish_time"])
                 )
                 # try:
-                if not binned and not bubble:
+                if not binned and not bubble and not area:
                     plotReservationGantt(
                         row,
                         totaldf,
@@ -54,6 +56,15 @@ def iterateReservations(inputpath, outputfile, outJobsCSV, verbosity, binned, bu
                     )
                 elif bubble:
                     plotBubbleChart(
+                        row,
+                        totaldf,
+                        outDir,
+                        totaljs.res_bounds,
+                        verbosity,
+                        maxJobLen,
+                    )
+                elif area:
+                    plotStackedArea(
                         row,
                         totaldf,
                         outDir,

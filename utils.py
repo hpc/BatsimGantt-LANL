@@ -186,3 +186,7 @@ def resetDfTimescale(df, windowStartTime):
         row["finish_time"] = row["finish_time"] - windowStartTime
         print(row)
     return df
+
+
+def normalizeDfList(dfList):
+    pass
