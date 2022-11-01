@@ -88,23 +88,7 @@ def main(argv):
 
     # If no reservations are specified, process the chart normally
     if not reservation:
-        with open(outJobsCSV) as f:
-            if sum(1 for line in f) > 70000:
-                print(
-                    "Creating gantt charts can be unreliable with files larger than 70k jobs. Are you use you want to continue? (Y/n)"
-                )
-                cont = input()
-                if cont == "Y" or cont == "y":
-                    pass
-                elif cont == "n":
-                    sys.exit(2)
-
-        js = JobSet.from_csv(outJobsCSV)
-        plot_gantt(js, title="Gantt chart")
-        if outputfile == "":
-            matplotlib.pyplot.show()
-        else:
-            matplotlib.pyplot.savefig(outputfile)
+        plotSimpleGantt(outJobsCSV, outputfile)
 
     elif reservation and not average:
         iterateReservations(inputpath, outputfile, outJobsCSV, verbosity, binned)

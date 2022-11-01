@@ -1,5 +1,8 @@
 from utils import *
 from evalys.visu.gantt import plot_gantt_df
+from evalys.visu.legacy import (
+    plot_gantt,
+)
 import matplotlib
 
 matplotlib.use("MacOSX")  # Comment this line if you're not using macos
@@ -202,3 +205,24 @@ def plotBinnedGanttReservations(row, totaldf, outDir, res_bounds, verbosity, max
             + "-"
             + str(reservationFinishTime)
         )
+
+
+def plotSimpleGantt(outJobsCSV, outfile):
+    with open(outJobsCSV) as f:
+        if sum(1 for line in f) > 70000:
+            print(
+                "Creating gantt charts can be unreliable with files larger than 70k jobs. Are you use you want to continue? (Y/n)"
+            )
+            cont = input()
+            if cont == "Y" or cont == "y":
+                pass
+            elif cont == "n":
+                sys.exit(2)
+        js = JobSet.from_csv(outJobsCSV)
+        js.plot(with_gantt=True)
+        matplotlib.pyplot.savefig(
+            outfile,
+            dpi=300,
+        )
+        matplotlib.pyplot.close()
+        print("\nSaved figure to: " + outfile)
