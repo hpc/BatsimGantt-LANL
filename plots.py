@@ -16,32 +16,23 @@ def chartRunningAverage(inputpath, outputfile, outJobsCSV):
     totaldf, totaljs = dfFromCsv(outJobsCSV)
     maxJobLen = getMaxJobLen(totaldf)
 
-    smallDf = []
-    longDf = []
-    largeDf = []
+    smallDf = pd.DataFrame()
+    longDf = pd.DataFrame()
+    largeDf = pd.DataFrame()
     allResvDf = [smallDf, longDf, largeDf]
 
     for index, row in totaldf.iterrows():
         if row["purpose"] == "reservation":
-            with yaspin().line as sp:
-                sp.text = (
-                    "Plotting gantt chart for reservation from:"
-                    + str(row["starting_time"])
-                    + " to "
-                    + str(row["finish_time"])
-                )
-                #! Catch empty DFs here
-                allresvDf = prepDf(row, totaldf, maxJobLen, allResvDf)
-                print(
-                    "Reservation from: "
-                    + str(row["starting_time"])
-                    + "-"
-                    + str(row["finish_time"])
-                    + " added to df."
-                )
+            tempResvDf, empty = prepDf(row, totaldf, maxJobLen, allResvDf)
+            if empty == False:
+                allResvDf = tempResvDf
     smallJs = JobSet.from_df(allResvDf[0])
     longJs = JobSet.from_df(allResvDf[1])
     largeJs = JobSet.from_df(allResvDf[2])
+    # print(smallJs.df["finish_time"].max())
+    # print(longJs.df["finish_time"].max())
+    # print(largeJs.df["finish_time"].max())
+    # sys.exit(2)
     # TODO Unhardcode the window start and finish times
     # ! THIS IS WRONG AND DOES NOT PLOT AVERAGE RIGHT NOW. THIS IS ONLY AN OUTLINE
     smallJs.plot(
@@ -163,22 +154,22 @@ def plotStackedArea(row, totaldf, outDir, res_bounds, verbosity, maxJobLen):
                 ]
             )
         )
-        smallJs.utilisation.load.sort_index(inplace=True)
-        longJs.utilisation.load.sort_index(inplace=True)
-        largeJs.utilisation.load.sort_index(inplace=True)
+        # smallJs.utilisation.load.sort_index(inplace=True)
+        # longJs.utilisation.load.sort_index(inplace=True)
+        # largeJs.utilisation.load.sort_index(inplace=True)
 
-        print(
-            max(
-                [
-                    smallJs.utilisation.load,
-                    longJs.utilisation.load,
-                    largeJs.utilisation.load,
-                ]
-            )
-        )
-        sys.exit(2)
-        # matplotlib.pyplot.stackplot(
-        #     "time", smallJs.utilisation.load, longJs.utilisation.load
+        # print(
+        #     max(
+        #         [
+        #             smallJs.utilisation.load,
+        #             longJs.utilisation.load,
+        #             largeJs.utilisation.load,
+        #         ]
+        #     )
         # )
+        # sys.exit(2)
+        matplotlib.pyplot.stackplot(
+            "time", smallJs.utilisation.load, longJs.utilisation.load
+        )
         # matplotlib.pyplot.legend(loc="upper left")
-        # matplotlib.pyplot.show()
+        matplotlib.pyplot.show()

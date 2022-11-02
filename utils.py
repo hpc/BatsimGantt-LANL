@@ -1,3 +1,4 @@
+from curses import window
 from yaspin import yaspin
 import sys, getopt, os, json
 from datetime import datetime
@@ -154,25 +155,56 @@ def prepDf(row, totaldf, maxJobLen, allResvDf):
     if windowFinishTime > int(totaldf["finish_time"].max()):
         windowFinishTime = int(totaldf["finish_time"].max())
 
-    cut_js = cut_workload(
-        totaldf, windowStartTime - maxJobLen, windowFinishTime + maxJobLen
-    )
-    cut_js = resetDfTimescale(cut_js, windowStartTime)
-    smallDf, longDf, largeDf = binDf(cut_js["workload"])
-    # smallDf = resetDfTimescale(smallDf)
-    # longDf = resetDfTimescale(longDf)
-    # largeDf = resetDfTimescale(largeDf)
-    # print(allResvDf[0])
-    if len(allResvDf[0]) == 0:
-        allResvDf[0] = smallDf
-        allResvDf[1] = longDf
-        allResvDf[2] = largeDf
-    else:
-        allResvDf[0] = pd.concat([allResvDf[0], smallDf])
-        allResvDf[1] = pd.concat([allResvDf[1], longDf])
-        allResvDf[2] = pd.concat([allResvDf[2], longDf])
+        # ! TRY THIS WITH AND WITHOUT maxJobLen there
+        # cut_js = cut_workload(
+        #     totaldf, windowStartTime - maxJobLen, windowFinishTime + maxJobLen
+        # )
+    # TODO Is the below ok????? Does it cut stuff out?
+    cut_js = cut_workload(totaldf, windowStartTime, windowFinishTime)
 
-    return allResvDf
+    # cut_js = resetDfTimescale(cut_js, windowStartTime)  # TODO Inspect this
+    # print("Window start" + str(windowStartTime - maxJobLen) + "\n\n\n")
+    # print(cut_js["workload"])
+    # print("\n\n\n\n\n\n")
+    # print(cut_js["running"])
+    # sys.exit(2)
+    # totalDf = pd.concat([cut_js["workload"], cut_js["running"]])
+    # print()
+    smallDf, longDf, largeDf = binDf(cut_js["workload"])
+    pd.set_option("display.max_columns", None)
+    # print(smallDf.workload.index)
+    # print(smallDf.workload)
+    #! These are commented out bc the timescale is reset earlier
+    smallDf = resetDfTimescale(smallDf, windowStartTime)
+    longDf = resetDfTimescale(longDf, windowStartTime)
+    largeDf = resetDfTimescale(largeDf, windowStartTime)
+    # print(allResvDf[0])
+    if smallDf.empty and longDf.empty and largeDf.empty:
+        print(
+            "Your dataset includes reservations surrounded by no jobs! Skipping reservation from "
+            + str(reservationStartTime)
+            + "-"
+            + str(reservationFinishTime)
+        )
+        return None, True
+    else:
+        if allResvDf[0].empty and allResvDf[1].empty and allResvDf[2].empty:
+            allResvDf[0] = smallDf
+            allResvDf[1] = longDf
+            allResvDf[2] = largeDf
+        else:
+            allResvDf[0] = pd.concat([allResvDf[0], smallDf])
+            allResvDf[1] = pd.concat([allResvDf[1], longDf])
+            allResvDf[2] = pd.concat([allResvDf[2], longDf])
+        print(
+            "Window surrounding reservation from: "
+            + str(row["starting_time"])
+            + "-"
+            + str(row["finish_time"])
+            + " added to df."
+        )
+
+        return allResvDf, False
 
 
 def resetDfTimescale(df, windowStartTime):
@@ -181,10 +213,25 @@ def resetDfTimescale(df, windowStartTime):
 
     :returns: The df with time data reset
     """
-    for index, row in df["workload"].iterrows():
-        row["starting_time"] = row["starting_time"] - windowStartTime
-        row["finish_time"] = row["finish_time"] - windowStartTime
-        print(row)
+    for index in df.index:
+        # TODO Later flag these print statements for verbose?
+        # print(str(windowStartTime))
+        # print(
+        #     str(df.loc[index, "starting_time"])
+        #     + "-"
+        #     + str(df.loc[index, "finish_time"])
+        # )
+        df.loc[index, "starting_time"] = (
+            float(df.loc[index, "starting_time"]) - windowStartTime
+        )
+        df.loc[index, "finish_time"] = (
+            float(df.loc[index, "finish_time"]) - windowStartTime
+        )
+        # print(
+        #     str(df.loc[index, "starting_time"])
+        #     + "-"
+        #     + str(df.loc[index, "finish_time"])
+        # )
     return df
 
 

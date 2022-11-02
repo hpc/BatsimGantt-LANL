@@ -143,8 +143,9 @@ def plotReservationGantt(row, totaldf, outDir, res_bounds, verbosity, maxJobLen)
     if verbosity == True:
         print(cut_js)
     # FIXME This could use saveDfPlot
+    totalDf = pd.concat([cut_js["workload"], cut_js["running"]])
     plot_gantt_df(
-        cut_js["workload"],
+        totalDf,
         res_bounds,
         windowStartTime,
         windowFinishTime,
