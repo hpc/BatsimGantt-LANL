@@ -134,7 +134,7 @@ def getOutputDir(InConfig, outputfile):
     return outDir
 
 
-def prepDf(row, totaldf, maxJobLen, allResvDf):
+def prepDf(row, totaldf, maxJobLen, allResvDf, n):
     """
     Using the given row, parses the jobs in a window, bins those jobs based on size,
     and concatenates them with the dataframes stored in allResvDf.
@@ -186,7 +186,7 @@ def prepDf(row, totaldf, maxJobLen, allResvDf):
             + "-"
             + str(reservationFinishTime)
         )
-        return None, True
+        return None, True, n
     else:
         if allResvDf[0].empty and allResvDf[1].empty and allResvDf[2].empty:
             allResvDf[0] = smallDf
@@ -203,8 +203,9 @@ def prepDf(row, totaldf, maxJobLen, allResvDf):
             + str(row["finish_time"])
             + " added to df."
         )
-
-        return allResvDf, False
+        n += 1
+        # The windowstart and finish times below assume a consistent reservation size
+        return allResvDf, False, n
 
 
 def resetDfTimescale(df, windowStartTime):

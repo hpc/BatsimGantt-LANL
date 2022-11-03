@@ -16,30 +16,33 @@ def chartRunningAverage(inputpath, outputfile, outJobsCSV):
     totaldf, totaljs = dfFromCsv(outJobsCSV)
     maxJobLen = getMaxJobLen(totaldf)
 
+    # FIXME Unhardcode this
+    windowSize = 169200
+    h, m, s = InConfig["reservations-resv1"]["reservations-array"][0]["time"].split(":")
+    reservationSize = int(h) * 3600 + int(m) * 60 + int(s)
+
     smallDf = pd.DataFrame()
     longDf = pd.DataFrame()
     largeDf = pd.DataFrame()
     allResvDf = [smallDf, longDf, largeDf]
 
+    n = 0
     for index, row in totaldf.iterrows():
         if row["purpose"] == "reservation":
-            tempResvDf, empty = prepDf(row, totaldf, maxJobLen, allResvDf)
+            tempResvDf, empty, n = prepDf(row, totaldf, maxJobLen, allResvDf, n)
             if empty == False:
                 allResvDf = tempResvDf
     smallJs = JobSet.from_df(allResvDf[0])
     longJs = JobSet.from_df(allResvDf[1])
     largeJs = JobSet.from_df(allResvDf[2])
-    # print(smallJs.df["finish_time"].max())
-    # print(longJs.df["finish_time"].max())
-    # print(largeJs.df["finish_time"].max())
-    # sys.exit(2)
     # TODO Unhardcode the window start and finish times
-    # ! THIS IS WRONG AND DOES NOT PLOT AVERAGE RIGHT NOW. THIS IS ONLY AN OUTLINE
     smallJs.plot(
         with_gantt=False,
         longJs=longJs,
         largeJs=largeJs,
         average=True,
+        divisor=n,
+        xAxisTermination=2 * windowSize + reservationSize,
     )
     outfile = getFileName(str("testing"), outDir)
     matplotlib.pyplot.savefig(
