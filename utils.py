@@ -227,6 +227,9 @@ def resetDfTimescale(df, windowStartTime):
         df.loc[index, "finish_time"] = (
             float(df.loc[index, "finish_time"]) - windowStartTime
         )
+        df.loc[index, "submission_time"] = (
+            float(df.loc[index, "submission_time"]) - windowStartTime
+        )
         # print(
         #     str(df.loc[index, "starting_time"])
         #     + "-"
