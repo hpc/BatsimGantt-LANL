@@ -10,7 +10,14 @@ matplotlib.use("MacOSX")  # Comment this line if you're not using macos
 
 
 def iterateReservations(
-    inputpath, outputfile, outJobsCSV, verbosity, binned, bubble, area
+    inputpath,
+    outputfile,
+    outJobsCSV,
+    verbosity,
+    binned,
+    bubble,
+    area,
+    reservation,
 ):
     """
     Iterates over reservations and plots them based on whether or not they're binned
@@ -36,7 +43,10 @@ def iterateReservations(
                     + str(row["finish_time"])
                 )
                 # try:
-                if not binned and not bubble and not area:
+
+                # Handle individual cases first
+                if reservation and not (binned or bubble or area):
+                    print("Plotting gantt charts for reservations! ")
                     plotReservationGantt(
                         row,
                         totaldf,
@@ -45,7 +55,8 @@ def iterateReservations(
                         verbosity,
                         maxJobLen,
                     )
-                elif binned:
+                elif binned and not (reservation or bubble or area):
+                    print("Plotting binned gantt charts with utilization plots")
                     plotBinnedGanttReservations(
                         row,
                         totaldf,
@@ -54,7 +65,8 @@ def iterateReservations(
                         verbosity,
                         maxJobLen,
                     )
-                elif bubble:
+                elif bubble and not (reservation or binned or area):
+                    print("Plotting bubble charts for reservations")
                     plotBubbleChart(
                         row,
                         totaldf,
@@ -63,7 +75,8 @@ def iterateReservations(
                         verbosity,
                         maxJobLen,
                     )
-                elif area:
+                elif area and not (reservation or bubble or binned):
+                    print("Plotting stacked area chart")
                     plotStackedArea(
                         row,
                         totaldf,
@@ -72,6 +85,48 @@ def iterateReservations(
                         verbosity,
                         maxJobLen,
                     )
+                # Handle group cases all at once
+                else:
+                    if reservation:
+                        print("Plotting gantt charts for reservations")
+                        plotReservationGantt(
+                            row,
+                            totaldf,
+                            outDir,
+                            totaljs.res_bounds,
+                            verbosity,
+                            maxJobLen,
+                        )
+                    if binned:
+                        print("Plotting binned gantt charts with utilization plots")
+                        plotBinnedGanttReservations(
+                            row,
+                            totaldf,
+                            outDir,
+                            totaljs.res_bounds,
+                            verbosity,
+                            maxJobLen,
+                        )
+                    if bubble:
+                        print("Plotting bubble charts for reservations")
+                        plotBubbleChart(
+                            row,
+                            totaldf,
+                            outDir,
+                            totaljs.res_bounds,
+                            verbosity,
+                            maxJobLen,
+                        )
+                    if area:
+                        print("Plotting stacked area chart")
+                        plotStackedArea(
+                            row,
+                            totaldf,
+                            outDir,
+                            totaljs.res_bounds,
+                            verbosity,
+                            maxJobLen,
+                        )
                 # except Exception as e:
                 #     print(e)
 
@@ -144,39 +199,47 @@ def plotReservationGantt(row, totaldf, outDir, res_bounds, verbosity, maxJobLen)
         print(cut_js)
     # FIXME This could use saveDfPlot
     totalDf = pd.concat([cut_js["workload"], cut_js["running"]])
-    plot_gantt_df(
-        totalDf,
-        res_bounds,
-        windowStartTime,
-        windowFinishTime,
-        title=str(
-            "Reservation from  "
+    if not cut_js["workload"].empty:
+        plot_gantt_df(
+            totalDf,
+            res_bounds,
+            windowStartTime,
+            windowFinishTime,
+            title=str(
+                "Reservation from  "
+                + str(reservationStartTime)
+                + "-"
+                + str(reservationFinishTime)
+                + "+-"
+                + str(windowSize)
+                + "S"
+            ),
+            resvStart=reservationStartTime,
+            resvExecTime=reservationExecTime,
+            resvNodes=reservationInterval,
+        )
+        matplotlib.pyplot.savefig(
+            os.path.join(
+                outDir,
+                str("RES-") + str(windowStartTime) + "-" + str(windowFinishTime),
+            ),
+            dpi=1000,
+        )
+        matplotlib.pyplot.close()
+        print(
+            "\nSaved figure to: "
+            + os.path.join(
+                outDir,
+                str("reservation") + str(windowStartTime) + "-" + str(windowFinishTime),
+            )
+        )
+    else:
+        print(
+            "Empty dataframe! Skipping reservation from: "
             + str(reservationStartTime)
             + "-"
             + str(reservationFinishTime)
-            + "+-"
-            + str(windowSize)
-            + "S"
-        ),
-        resvStart=reservationStartTime,
-        resvExecTime=reservationExecTime,
-        resvNodes=reservationInterval,
-    )
-    matplotlib.pyplot.savefig(
-        os.path.join(
-            outDir,
-            str("reservation") + str(windowStartTime) + "-" + str(windowFinishTime),
-        ),
-        dpi=1000,
-    )
-    matplotlib.pyplot.close()
-    print(
-        "\nSaved figure to: "
-        + os.path.join(
-            outDir,
-            str("reservation") + str(windowStartTime) + "-" + str(windowFinishTime),
         )
-    )
 
 
 def plotBinnedGanttReservations(row, totaldf, outDir, res_bounds, verbosity, maxJobLen):

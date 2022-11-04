@@ -43,14 +43,29 @@ def chartRunningAverage(inputpath, outputfile, outJobsCSV):
         average=True,
         divisor=n,
         xAxisTermination=2 * windowSize + reservationSize,
+        reservationStart=windowSize,
+        reservationExec=reservationSize,
     )
-    outfile = getFileName(str("testing"), outDir)
+    # outfile = getFileName(
+    #     str(InConfig["batsched-policy"])
+    #     + "-"
+    #     + str(InConfig["nodes"])
+    #     + "-"
+    #     + datetime.now().strftime("%H:%M:%S"),
+    #     outDir,
+    # )
+    outFileLoc = os.path.join(
+        outDir,
+        "runningAverage-"
+        + InConfig["batsched-policy"]
+        + datetime.now().strftime("%H:%M:%S"),
+    )
     matplotlib.pyplot.savefig(
-        outfile,
+        outFileLoc,
         dpi=300,
     )
     matplotlib.pyplot.close()
-    print("\nSaved figure to: " + outfile)
+    print("\nSaved figure to: " + outFileLoc)
 
 
 def plotBubbleChart(row, totaldf, outDir, res_bounds, verbosity, maxJobLen):
@@ -70,7 +85,7 @@ def plotBubbleChart(row, totaldf, outDir, res_bounds, verbosity, maxJobLen):
 
     outFile = os.path.join(
         outDir,
-        str("reservation") + str(windowStartTime) + "-" + str(windowFinishTime),
+        str("BUB-") + str(windowStartTime) + "-" + str(windowFinishTime),
     )
 
     cut_js = cut_workload(

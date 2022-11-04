@@ -91,17 +91,45 @@ def main(argv):
     outJobsCSV = os.path.join(inputpath, "output", "expe-out", "out_jobs.csv")
 
     # If no reservations are specified, process the chart normally
-    if not reservation:
-        plotSimpleGantt(outJobsCSV, outputfile)
+    if not reservation and not binned and not average and not bubble:
+        with yaspin().line as sp:
+            sp.text = "Plotting gantt for entire outputfile"
+            plotSimpleGantt(outJobsCSV, outputfile)
+            # FIXME The above should really be an option of it's own so it can be flagged alongside the other options
 
-    elif reservation and not average:
+    # If you're doing any combination of resv,bin, and bubble but not average
+    elif (reservation or binned or bubble) and not average:
         iterateReservations(
-            inputpath, outputfile, outJobsCSV, verbosity, binned, bubble, area
+            inputpath,
+            outputfile,
+            outJobsCSV,
+            verbosity,
+            binned,
+            bubble,
+            area,
+            reservation,
         )
 
-    elif reservation and average:
+    #  If you're doing any combo of resv, bin, and bubble and also average
+    elif (reservation or binned or bubble) and average:
         chartRunningAverage(inputpath, outputfile, outJobsCSV)
 
+        iterateReservations(
+            inputpath,
+            outputfile,
+            outJobsCSV,
+            verbosity,
+            binned,
+            bubble,
+            area,
+            reservation,
+        )
+
+    # If you only want average
+    elif average and not (reservation or binned or bubble):
+        chartRunningAverage(inputpath, outputfile, outJobsCSV)
+
+    # If your options are bad
     else:
         print("Incompatible options entered! Please try again")
         sys.exit(2)

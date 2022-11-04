@@ -124,6 +124,7 @@ def getOutputDir(InConfig, outputfile):
             str(InConfig["batsched-policy"])
             + "-"
             + str(InConfig["nodes"])
+            + "-"
             + datetime.now().strftime("%H:%M:%S")
         )
         if outputfile == "":
