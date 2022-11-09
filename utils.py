@@ -162,6 +162,7 @@ def prepDf(row, totaldf, maxJobLen, allResvDf, n):
         # )
     # TODO Is the below ok????? Does it cut stuff out?
     cut_js = cut_workload(totaldf, windowStartTime, windowFinishTime)
+    totalDf = pd.concat([cut_js["workload"], cut_js["running"], cut_js["queue"]])
 
     # cut_js = resetDfTimescale(cut_js, windowStartTime)  # TODO Inspect this
     # print("Window start" + str(windowStartTime - maxJobLen) + "\n\n\n")
@@ -171,7 +172,7 @@ def prepDf(row, totaldf, maxJobLen, allResvDf, n):
     # sys.exit(2)
     # totalDf = pd.concat([cut_js["workload"], cut_js["running"]])
     # print()
-    smallDf, longDf, largeDf = binDf(cut_js["workload"])
+    smallDf, longDf, largeDf = binDf(totalDf)
     pd.set_option("display.max_columns", None)
     # print(smallDf.workload.index)
     # print(smallDf.workload)

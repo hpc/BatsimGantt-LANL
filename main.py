@@ -30,12 +30,13 @@ def main(argv):
     average = False
     bubble = False
     area = False
+    window = False
 
     # Parse the arguments passed in
     try:
         opts, args = getopt.getopt(
             argv,
-            "hi:o:r:v:b:a:s:n:",
+            "hi:o:r:v:b:a:s:n:w:",
             [
                 "ipath=",
                 "ofile=",
@@ -45,23 +46,24 @@ def main(argv):
                 "average=",
                 "bubble=",
                 "area=",
+                "window=",
             ],
         )
     except getopt.GetoptError:
         print(
-            "Option error! See usage below:\npython3 main.py -i <inputpath> [-o <outputfile>] [-r <y/N>] [-v <y/N>] [-b <y/N>] [-a <y/N>] [-s <y/N>] [-n <y/N>]"
+            "Option error! See usage below:\npython3 main.py -i <inputpath> [-o <outputfile>] [-r <y/N>] [-v <y/N>] [-b <y/N>] [-a <y/N>] [-s <y/N>] [-n <y/N>] [-w <y/N>]"
         )
         sys.exit(2)
     for opt, arg in opts:
         if opt == "-h":
             print(
-                "Help menu:\npython3 main.py -i <inputpath> [-o <outputfile>] [-r <y/N>] [-v <y/N>] [-b <y/N] [-a <y/N>] [-s <y/N>] [-n <y/N>]"
+                "Help menu:\npython3 main.py -i <inputpath> [-o <outputfile>] [-r <y/N>] [-v <y/N>] [-b <y/N] [-a <y/N>] [-s <y/N>] [-n <y/N> [-w <y/N>]]"
             )
             sys.exit(2)
         elif opt in ("-i", "--ipath"):
             if arg == "":
                 print(
-                    "python3 main.py -i <inputpath> [-o <outputfile>] [-r <y/N>] [-v <y/N>] [-b <y/N] [-a <y/N>] [-s <y/N>] [-n <y/N>]\n Please supply an input path!"
+                    "python3 main.py -i <inputpath> [-o <outputfile>] [-r <y/N>] [-v <y/N>] [-b <y/N] [-a <y/N>] [-s <y/N>] [-n <y/N>] [-w <y/N>]\n Please supply an input path!"
                 )
                 sys.exit(2)
             else:
@@ -86,19 +88,22 @@ def main(argv):
         elif opt in ("-n", "--area"):
             if arg.lower() == "y":
                 area = True
+        elif opt in ("-w", "--window"):
+            if arg.lower() == "y":
+                window = True
 
     # Parse the path of the required files.
     outJobsCSV = os.path.join(inputpath, "output", "expe-out", "out_jobs.csv")
 
     # If no reservations are specified, process the chart normally
-    if not reservation and not binned and not average and not bubble:
+    if not reservation and not binned and not average and not bubble and not window:
         with yaspin().line as sp:
             sp.text = "Plotting gantt for entire outputfile"
             plotSimpleGantt(outJobsCSV, outputfile)
             # FIXME The above should really be an option of it's own so it can be flagged alongside the other options
 
     # If you're doing any combination of resv,bin, and bubble but not average
-    elif (reservation or binned or bubble) and not average:
+    elif (reservation or binned or bubble or window) and not average:
         iterateReservations(
             inputpath,
             outputfile,
@@ -108,10 +113,11 @@ def main(argv):
             bubble,
             area,
             reservation,
+            window,
         )
 
     #  If you're doing any combo of resv, bin, and bubble and also average
-    elif (reservation or binned or bubble) and average:
+    elif (reservation or binned or bubble or window) and average:
         chartRunningAverage(inputpath, outputfile, outJobsCSV)
 
         iterateReservations(
@@ -123,10 +129,11 @@ def main(argv):
             bubble,
             area,
             reservation,
+            window,
         )
 
     # If you only want average
-    elif average and not (reservation or binned or bubble):
+    elif average and not (reservation or binned or bubble or window):
         chartRunningAverage(inputpath, outputfile, outJobsCSV)
 
     # If your options are bad

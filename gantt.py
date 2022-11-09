@@ -18,6 +18,7 @@ def iterateReservations(
     bubble,
     area,
     reservation,
+    window,
 ):
     """
     Iterates over reservations and plots them based on whether or not they're binned
@@ -31,10 +32,16 @@ def iterateReservations(
         )
         sys.exit(2)
     totaldf, totaljs = dfFromCsv(outJobsCSV)
-    maxJobLen = getMaxJobLen(totaldf)
 
+    maxJobLen = getMaxJobLen(totaldf)
+    n = 0
+    reservationSet = []
     for index, row in totaldf.iterrows():
         if row["purpose"] == "reservation":
+            if n == 0:
+                t0 = row["starting_time"]
+            n += 1
+            reservationSet.append(row)
             with yaspin().line as sp:
                 sp.text = (
                     "Plotting chart for reservation from:"
@@ -128,7 +135,29 @@ def iterateReservations(
                             maxJobLen,
                         )
                 # except Exception as e:
-                #     print(e)
+            if window == True:
+                if n == 4:
+                    n = 0
+                    tf = row["finish_time"]
+                    with yaspin().line as sp:
+                        sp.text = (
+                            "Plotting chart for window from:"
+                            + str(t0)
+                            + " to "
+                            + str(tf)
+                        )
+                        chartWindow(
+                            row,
+                            t0,
+                            tf,
+                            totaldf,
+                            outDir,
+                            totaljs.res_bounds,
+                            verbosity,
+                            maxJobLen,
+                            reservationSet,
+                        )
+                        reservationSet = []
 
 
 def saveDfPlot(
@@ -195,11 +224,52 @@ def plotReservationGantt(row, totaldf, outDir, res_bounds, verbosity, maxJobLen)
     cut_js = cut_workload(
         totaldf, windowStartTime - maxJobLen, windowFinishTime + maxJobLen
     )
+    # cut_js["workload"].to_csv(
+    #     os.path.join(
+    #         outDir,
+    #         str("CSV-WORKLOAD-")
+    #         + str(windowStartTime)
+    #         + "-"
+    #         + str(windowFinishTime)
+    #         + ".csv",
+    #     )
+    # )
+    # cut_js["running"].to_csv(
+    #     os.path.join(
+    #         outDir,
+    #         str("CSV-RUNNING-")
+    #         + str(windowStartTime)
+    #         + "-"
+    #         + str(windowFinishTime)
+    #         + ".csv",
+    #     )
+    # )
+    # cut_js = JobSet.from_df(cut_js["workload"])
     if verbosity == True:
         print(cut_js)
     # FIXME This could use saveDfPlot
-    totalDf = pd.concat([cut_js["workload"], cut_js["running"]])
-    if not cut_js["workload"].empty:
+    totalDf = pd.concat([cut_js["workload"], cut_js["running"], cut_js["queue"]])
+    # try:
+    #     saveDfPlot(
+    #         cut_js,
+    #         getFileName(
+    #             str("BIN-" + str(windowStartTime) + "-" + str(windowFinishTime)), outDir
+    #         ),
+    #         reservationStartTime,
+    #         reservationExecTime,
+    #         reservationInterval,
+    #         windowStartTime=windowStartTime,
+    #         windowFinishtime=windowFinishTime,
+    #         binned=False,
+    #     )
+    # except ValueError:
+    #     print(
+    #         "WARNING: Your dataset contains reservations that are not surrounded by any jobs. Skipping reservation from "
+    #         + str(reservationStartTime)
+    #         + "-"
+    #         + str(reservationFinishTime)
+    #     )
+    if not totalDf.empty:
         plot_gantt_df(
             totalDf,
             res_bounds,
@@ -225,12 +295,13 @@ def plotReservationGantt(row, totaldf, outDir, res_bounds, verbosity, maxJobLen)
             ),
             dpi=1000,
         )
+        # matplotlib.pyplot.show()
         matplotlib.pyplot.close()
         print(
             "\nSaved figure to: "
             + os.path.join(
                 outDir,
-                str("reservation") + str(windowStartTime) + "-" + str(windowFinishTime),
+                str("RES-") + str(windowStartTime) + "-" + str(windowFinishTime),
             )
         )
     else:
@@ -271,10 +342,12 @@ def plotBinnedGanttReservations(row, totaldf, outDir, res_bounds, verbosity, max
     cut_js = cut_workload(
         totaldf, windowStartTime - maxJobLen, windowFinishTime + maxJobLen
     )
+    totalDf = pd.concat([cut_js["workload"], cut_js["running"], cut_js["queue"]])
+
     if verbosity == True:
         print(cut_js)
     try:
-        smallJs, longJs, largeJs = binDfToJs(cut_js["workload"])
+        smallJs, longJs, largeJs = binDfToJs(totalDf)
         saveDfPlot(
             smallJs,
             getFileName(
@@ -321,3 +394,58 @@ def plotSimpleGantt(outJobsCSV, outfile):
         )
         matplotlib.pyplot.close()
         print("\nSaved figure to: " + outfile)
+
+
+def chartWindow(
+    row, t0, tf, totaldf, outDir, res_bounds, verbosity, maxJobLen, reservationSet
+):
+    reservationInterval = row["allocated_resources"]
+    reservationExecTime = int(row["execution_time"])
+    windowSize = 169200
+
+    windowStartTime = t0 - windowSize
+    if windowStartTime < 0:
+        windowStartTime = 0
+    windowFinishTime = tf + windowSize
+    if windowFinishTime > float(totaldf["finish_time"].max()):
+        windowFinishTime = float(totaldf["finish_time"].max())
+    cut_js = cut_workload(
+        totaldf, windowStartTime - maxJobLen, windowFinishTime + maxJobLen
+    )
+    totalDf = pd.concat([cut_js["workload"], cut_js["running"], cut_js["queue"]])
+    if not cut_js["workload"].empty:
+        fig, ax = matplotlib.pyplot.subplots(figsize=(24, 16))
+        plot_gantt_df(
+            totalDf,
+            res_bounds,
+            windowStartTime,
+            windowFinishTime,
+            title=str(
+                "Window from  " + str(t0) + "-" + str(tf) + "+-" + str(windowSize) + "S"
+            ),
+            resvStart=t0,
+            resvExecTime=reservationExecTime,
+            resvNodes=reservationInterval,
+            resvSet=reservationSet,
+        )
+        matplotlib.pyplot.savefig(
+            os.path.join(
+                outDir,
+                str("WIN-")
+                + str(windowStartTime)
+                + "-"
+                + str(windowFinishTime)
+                + ".png",
+            ),
+            dpi=1000,
+        )
+        matplotlib.pyplot.close()
+        print(
+            "\nSaved figure to: "
+            + os.path.join(
+                outDir,
+                str("WIN-") + str(windowStartTime) + "-" + str(windowFinishTime),
+            )
+        )
+    else:
+        print("Empty dataframe! Skipping window from: " + str(t0) + "-" + str(tf))

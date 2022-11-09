@@ -91,8 +91,9 @@ def plotBubbleChart(row, totaldf, outDir, res_bounds, verbosity, maxJobLen):
     cut_js = cut_workload(
         totaldf, windowStartTime - maxJobLen, windowFinishTime + maxJobLen
     )
+    totalDf = pd.concat([cut_js["workload"], cut_js["running"], cut_js["queue"]])
 
-    if cut_js["workload"].empty:
+    if totalDf.empty:
         print(
             "Empty dataframe! Skipping reservation from: "
             + str(reservationStartTime)
@@ -105,7 +106,7 @@ def plotBubbleChart(row, totaldf, outDir, res_bounds, verbosity, maxJobLen):
         fig, ax = matplotlib.pyplot.subplots(figsize=(12, 8))
         sns.scatterplot(
             ax=ax,
-            data=cut_js["workload"],
+            data=totalDf,
             x="starting_time",
             y="execution_time",
             size="requested_number_of_resources",
@@ -124,9 +125,12 @@ def plotBubbleChart(row, totaldf, outDir, res_bounds, verbosity, maxJobLen):
             ),
         )
         sns.move_legend(ax, "upper left", bbox_to_anchor=(1, 1))
+        ax.set_xlim(windowStartTime, windowFinishTime)
+
         matplotlib.pyplot.savefig(outFile, dpi=300, bbox_inches="tight")
         matplotlib.pyplot.close()
         print("\nSaved figure to: " + outFile)
+        sns.set_palette("tab10")
 
 
 def plotStackedArea(row, totaldf, outDir, res_bounds, verbosity, maxJobLen):
