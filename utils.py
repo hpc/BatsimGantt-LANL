@@ -7,18 +7,6 @@ from evalys.utils import cut_workload
 import pandas as pd
 
 
-# def dictHasKey(myDict, key):
-#     """
-#     Used to check whether key 'key' exists in dict 'mydict'
-
-#     :returns: a boolean value representing whether or not the key exists.
-#     """
-#     if key in myDict.keys():
-#         return True
-#     else:
-#         return False
-
-
 def getMaxJobLen(totaldf):
     """
     Gets the length of the longest job in a dataframe
@@ -143,11 +131,11 @@ def prepDf(row, totaldf, maxJobLen, allResvDf, n):
     :returns: a list of the three types of jobs, containing 3 dataframes, one for each size,
     with the details from this row appended.
     """
-    # Defining reservation and window bounds
     reservationStartTime = int(row["starting_time"])
     reservationFinishTime = int(row["finish_time"])
     reservationExecTime = int(row["execution_time"])
     reservationInterval = row["allocated_resources"]
+    # FIXME WindowSize
     windowSize = 169200
     windowStartTime = reservationStartTime - windowSize
     if windowStartTime < 0:
@@ -155,33 +143,10 @@ def prepDf(row, totaldf, maxJobLen, allResvDf, n):
     windowFinishTime = reservationFinishTime + windowSize
     if windowFinishTime > int(totaldf["finish_time"].max()):
         windowFinishTime = int(totaldf["finish_time"].max())
-
-        # ! TRY THIS WITH AND WITHOUT maxJobLen there
-        # cut_js = cut_workload(
-        #     totaldf, windowStartTime - maxJobLen, windowFinishTime + maxJobLen
-        # )
-    # TODO Is the below ok????? Does it cut stuff out?
     cut_js = cut_workload(totaldf, windowStartTime, windowFinishTime)
     totalDf = pd.concat([cut_js["workload"], cut_js["running"], cut_js["queue"]])
 
-    # cut_js = resetDfTimescale(cut_js, windowStartTime)  # TODO Inspect this
-    # print("Window start" + str(windowStartTime - maxJobLen) + "\n\n\n")
-    # print(cut_js["workload"])
-    # print("\n\n\n\n\n\n")
-    # print(cut_js["running"])
-    # sys.exit(2)
-    # totalDf = pd.concat([cut_js["workload"], cut_js["running"]])
-    # print()
-    smallDf, longDf, largeDf = binDf(totalDf)
-    pd.set_option("display.max_columns", None)
-    # print(smallDf.workload.index)
-    # print(smallDf.workload)
-    #! These are commented out bc the timescale is reset earlier
-    smallDf = resetDfTimescale(smallDf, windowStartTime)
-    longDf = resetDfTimescale(longDf, windowStartTime)
-    largeDf = resetDfTimescale(largeDf, windowStartTime)
-    # print(allResvDf[0])
-    if smallDf.empty and longDf.empty and largeDf.empty:
+    if not checkForJobs(totalDf):
         print(
             "Your dataset includes reservations surrounded by no jobs! Skipping reservation from "
             + str(reservationStartTime)
@@ -189,25 +154,29 @@ def prepDf(row, totaldf, maxJobLen, allResvDf, n):
             + str(reservationFinishTime)
         )
         return None, True, n
+    smallDf, longDf, largeDf = binDf(totalDf)
+    smallDf = resetDfTimescale(smallDf, windowStartTime)
+    longDf = resetDfTimescale(longDf, windowStartTime)
+    largeDf = resetDfTimescale(largeDf, windowStartTime)
+
+    if allResvDf[0].empty and allResvDf[1].empty and allResvDf[2].empty:
+        allResvDf[0] = smallDf
+        allResvDf[1] = longDf
+        allResvDf[2] = largeDf
     else:
-        if allResvDf[0].empty and allResvDf[1].empty and allResvDf[2].empty:
-            allResvDf[0] = smallDf
-            allResvDf[1] = longDf
-            allResvDf[2] = largeDf
-        else:
-            allResvDf[0] = pd.concat([allResvDf[0], smallDf])
-            allResvDf[1] = pd.concat([allResvDf[1], longDf])
-            allResvDf[2] = pd.concat([allResvDf[2], longDf])
-        print(
-            "Window surrounding reservation from: "
-            + str(row["starting_time"])
-            + "-"
-            + str(row["finish_time"])
-            + " added to df."
-        )
-        n += 1
-        # The windowstart and finish times below assume a consistent reservation size
-        return allResvDf, False, n
+        allResvDf[0] = pd.concat([allResvDf[0], smallDf])
+        allResvDf[1] = pd.concat([allResvDf[1], longDf])
+        allResvDf[2] = pd.concat([allResvDf[2], longDf])
+    print(
+        "Window surrounding reservation from: "
+        + str(row["starting_time"])
+        + "-"
+        + str(row["finish_time"])
+        + " added to df."
+    )
+    n += 1
+    # The windowstart and finish times below assume a consistent reservation size
+    return allResvDf, False, n
 
 
 def resetDfTimescale(df, windowStartTime):
@@ -217,29 +186,20 @@ def resetDfTimescale(df, windowStartTime):
     :returns: The df with time data reset
     """
     for index in df.index:
-        # TODO Later flag these print statements for verbose?
-        # print(str(windowStartTime))
-        # print(
-        #     str(df.loc[index, "starting_time"])
-        #     + "-"
-        #     + str(df.loc[index, "finish_time"])
-        # )
         df.loc[index, "starting_time"] = (
-            float(df.loc[index, "starting_time"]) - windowStartTime
+            df.loc[index, "starting_time"] - windowStartTime
         )
-        df.loc[index, "finish_time"] = (
-            float(df.loc[index, "finish_time"]) - windowStartTime
-        )
+        df.loc[index, "finish_time"] = df.loc[index, "finish_time"] - windowStartTime
         df.loc[index, "submission_time"] = (
-            float(df.loc[index, "submission_time"]) - windowStartTime
+            df.loc[index, "submission_time"] - windowStartTime
         )
-        # print(
-        #     str(df.loc[index, "starting_time"])
-        #     + "-"
-        #     + str(df.loc[index, "finish_time"])
-        # )
     return df
 
 
-def normalizeDfList(dfList):
-    pass
+def checkForJobs(df):
+    """
+    Checks for jobs aside from reservations within a dataframe
+    """
+    for index, row in df.iterrows():
+        if row["purpose"] == "job":
+            return True

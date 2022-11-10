@@ -224,52 +224,10 @@ def plotReservationGantt(row, totaldf, outDir, res_bounds, verbosity, maxJobLen)
     cut_js = cut_workload(
         totaldf, windowStartTime - maxJobLen, windowFinishTime + maxJobLen
     )
-    # cut_js["workload"].to_csv(
-    #     os.path.join(
-    #         outDir,
-    #         str("CSV-WORKLOAD-")
-    #         + str(windowStartTime)
-    #         + "-"
-    #         + str(windowFinishTime)
-    #         + ".csv",
-    #     )
-    # )
-    # cut_js["running"].to_csv(
-    #     os.path.join(
-    #         outDir,
-    #         str("CSV-RUNNING-")
-    #         + str(windowStartTime)
-    #         + "-"
-    #         + str(windowFinishTime)
-    #         + ".csv",
-    #     )
-    # )
-    # cut_js = JobSet.from_df(cut_js["workload"])
     if verbosity == True:
         print(cut_js)
-    # FIXME This could use saveDfPlot
     totalDf = pd.concat([cut_js["workload"], cut_js["running"], cut_js["queue"]])
-    # try:
-    #     saveDfPlot(
-    #         cut_js,
-    #         getFileName(
-    #             str("BIN-" + str(windowStartTime) + "-" + str(windowFinishTime)), outDir
-    #         ),
-    #         reservationStartTime,
-    #         reservationExecTime,
-    #         reservationInterval,
-    #         windowStartTime=windowStartTime,
-    #         windowFinishtime=windowFinishTime,
-    #         binned=False,
-    #     )
-    # except ValueError:
-    #     print(
-    #         "WARNING: Your dataset contains reservations that are not surrounded by any jobs. Skipping reservation from "
-    #         + str(reservationStartTime)
-    #         + "-"
-    #         + str(reservationFinishTime)
-    #     )
-    if not totalDf.empty:
+    if checkForJobs(totalDf):
         plot_gantt_df(
             totalDf,
             res_bounds,
@@ -306,7 +264,7 @@ def plotReservationGantt(row, totaldf, outDir, res_bounds, verbosity, maxJobLen)
         )
     else:
         print(
-            "Empty dataframe! Skipping reservation from: "
+            "Your dataset includes reservations surrounded by no jobs! Skipping reservation from "
             + str(reservationStartTime)
             + "-"
             + str(reservationFinishTime)
@@ -346,7 +304,7 @@ def plotBinnedGanttReservations(row, totaldf, outDir, res_bounds, verbosity, max
 
     if verbosity == True:
         print(cut_js)
-    try:
+    if checkForJobs(totalDf):
         smallJs, longJs, largeJs = binDfToJs(totalDf)
         saveDfPlot(
             smallJs,
@@ -362,9 +320,9 @@ def plotBinnedGanttReservations(row, totaldf, outDir, res_bounds, verbosity, max
             windowFinishtime=windowFinishTime,
             binned=True,
         )
-    except ValueError:
+    else:
         print(
-            "WARNING: Your dataset contains reservations that are not surrounded by any jobs. Skipping reservation from "
+            "Your dataset includes reservations surrounded by no jobs! Skipping reservation from "
             + str(reservationStartTime)
             + "-"
             + str(reservationFinishTime)
@@ -375,7 +333,6 @@ def plotSimpleGantt(outJobsCSV, outfile):
     """
     Plots a simple, single gantt chart for the CSV.
     """
-    # FIXME Rescale this chart so its bigger
     with open(outJobsCSV) as f:
         if sum(1 for line in f) > 70000:
             print(
