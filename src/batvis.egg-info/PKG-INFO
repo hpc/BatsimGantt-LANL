@@ -1,0 +1,19 @@
+Metadata-Version: 2.1
+Name: batvis
+Version: 0.1.0
+Summary: A package that generates charts for batsim outputs
+Home-page: https://gitlab.newmexicoconsortium.org/lanl-ccu/batsimGantt
+Author: Vivian Hafener
+Author-email: vhafener@lanl.gov
+Project-URL: Bug Tracker, https://gitlab.newmexicoconsortium.org/lanl-ccu/batsimGantt/-/issues
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown
+License-File: LICENSE
+
+# batvis
+Batvis is a tool to assist in the generation of a variety of plots from data produced by our modified version of the batsim program. This tool is intended to be run from the command line, and can be scripted through the use of bash scripts. This tool pulls information from the config files of a batsim experiment run, then charts the jobs based on the information in the out_jobs.csv file. As the program traverses the expected directory structure of our batsim outputs, there is no need to specifically pull these files out; instead just point batvis at the directory for the "run" of batsim. 
+## Installation
+
