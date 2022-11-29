@@ -1,9 +1,6 @@
 from utils import *
 from plots import *
 from evalys.visu.gantt import plot_gantt_df
-from evalys.visu.legacy import (
-    plot_gantt,
-)
 import matplotlib
 
 matplotlib.use("MacOSX")  # Comment this line if you're not using macos
@@ -16,7 +13,6 @@ def iterateReservations(
     verbosity,
     binned,
     bubble,
-    area,
     reservation,
     window,
 ):
@@ -52,7 +48,7 @@ def iterateReservations(
                 # try:
 
                 # Handle individual cases first
-                if reservation and not (binned or bubble or area):
+                if reservation and not (binned or bubble):
                     print("Plotting gantt charts for reservations! ")
                     plotReservationGantt(
                         row,
@@ -62,7 +58,7 @@ def iterateReservations(
                         verbosity,
                         maxJobLen,
                     )
-                elif binned and not (reservation or bubble or area):
+                elif binned and not (reservation or bubble):
                     print("Plotting binned gantt charts with utilization plots")
                     plotBinnedGanttReservations(
                         row,
@@ -72,19 +68,9 @@ def iterateReservations(
                         verbosity,
                         maxJobLen,
                     )
-                elif bubble and not (reservation or binned or area):
+                elif bubble and not (reservation or binned):
                     print("Plotting bubble charts for reservations")
                     plotBubbleChart(
-                        row,
-                        totaldf,
-                        outDir,
-                        totaljs.res_bounds,
-                        verbosity,
-                        maxJobLen,
-                    )
-                elif area and not (reservation or bubble or binned):
-                    print("Plotting stacked area chart")
-                    plotStackedArea(
                         row,
                         totaldf,
                         outDir,
@@ -117,16 +103,6 @@ def iterateReservations(
                     if bubble:
                         print("Plotting bubble charts for reservations")
                         plotBubbleChart(
-                            row,
-                            totaldf,
-                            outDir,
-                            totaljs.res_bounds,
-                            verbosity,
-                            maxJobLen,
-                        )
-                    if area:
-                        print("Plotting stacked area chart")
-                        plotStackedArea(
                             row,
                             totaldf,
                             outDir,
@@ -224,52 +200,10 @@ def plotReservationGantt(row, totaldf, outDir, res_bounds, verbosity, maxJobLen)
     cut_js = cut_workload(
         totaldf, windowStartTime - maxJobLen, windowFinishTime + maxJobLen
     )
-    # cut_js["workload"].to_csv(
-    #     os.path.join(
-    #         outDir,
-    #         str("CSV-WORKLOAD-")
-    #         + str(windowStartTime)
-    #         + "-"
-    #         + str(windowFinishTime)
-    #         + ".csv",
-    #     )
-    # )
-    # cut_js["running"].to_csv(
-    #     os.path.join(
-    #         outDir,
-    #         str("CSV-RUNNING-")
-    #         + str(windowStartTime)
-    #         + "-"
-    #         + str(windowFinishTime)
-    #         + ".csv",
-    #     )
-    # )
-    # cut_js = JobSet.from_df(cut_js["workload"])
     if verbosity == True:
         print(cut_js)
-    # FIXME This could use saveDfPlot
     totalDf = pd.concat([cut_js["workload"], cut_js["running"], cut_js["queue"]])
-    # try:
-    #     saveDfPlot(
-    #         cut_js,
-    #         getFileName(
-    #             str("BIN-" + str(windowStartTime) + "-" + str(windowFinishTime)), outDir
-    #         ),
-    #         reservationStartTime,
-    #         reservationExecTime,
-    #         reservationInterval,
-    #         windowStartTime=windowStartTime,
-    #         windowFinishtime=windowFinishTime,
-    #         binned=False,
-    #     )
-    # except ValueError:
-    #     print(
-    #         "WARNING: Your dataset contains reservations that are not surrounded by any jobs. Skipping reservation from "
-    #         + str(reservationStartTime)
-    #         + "-"
-    #         + str(reservationFinishTime)
-    #     )
-    if not totalDf.empty:
+    if checkForJobs(totalDf):
         plot_gantt_df(
             totalDf,
             res_bounds,
@@ -306,7 +240,7 @@ def plotReservationGantt(row, totaldf, outDir, res_bounds, verbosity, maxJobLen)
         )
     else:
         print(
-            "Empty dataframe! Skipping reservation from: "
+            "Your dataset includes reservations surrounded by no jobs! Skipping reservation from "
             + str(reservationStartTime)
             + "-"
             + str(reservationFinishTime)
@@ -346,7 +280,7 @@ def plotBinnedGanttReservations(row, totaldf, outDir, res_bounds, verbosity, max
 
     if verbosity == True:
         print(cut_js)
-    try:
+    if checkForJobs(totalDf):
         smallJs, longJs, largeJs = binDfToJs(totalDf)
         saveDfPlot(
             smallJs,
@@ -362,9 +296,9 @@ def plotBinnedGanttReservations(row, totaldf, outDir, res_bounds, verbosity, max
             windowFinishtime=windowFinishTime,
             binned=True,
         )
-    except ValueError:
+    else:
         print(
-            "WARNING: Your dataset contains reservations that are not surrounded by any jobs. Skipping reservation from "
+            "Your dataset includes reservations surrounded by no jobs! Skipping reservation from "
             + str(reservationStartTime)
             + "-"
             + str(reservationFinishTime)
@@ -375,7 +309,6 @@ def plotSimpleGantt(outJobsCSV, outfile):
     """
     Plots a simple, single gantt chart for the CSV.
     """
-    # FIXME Rescale this chart so its bigger
     with open(outJobsCSV) as f:
         if sum(1 for line in f) > 70000:
             print(

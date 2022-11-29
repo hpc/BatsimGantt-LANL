@@ -1,7 +1,7 @@
 # coding: utf-8
 """
 Usage:
-    python3 main.py -i <inputpath> [-o <outputfile>] [-r <y/N>] [-v <y/N>] [-b <y/N]
+    python3 main.py -i <inputpath> [-o <outputfile>] [-r <y/N>] [-v <y/N>] [-b <y/N] [-a <y/N>] [-s <y/N>] [-w <y/N>]
 
 Required Options:
     -i <inputpath>    The run directory of the experiment. Eventually this will be the experiment's root directory. Try to use absolute paths, for some reason this doesnt like ~ for homedirs
@@ -11,6 +11,9 @@ Optional options:
     -r <y/n>    Prompts this program to look for and utilize reservations when creating the output charts 
     -v <y/N>    verbose operation.
     -b <y/N>    Bin reservations by size
+    -a <y/N>    Plot average utilization plot
+    -s <y/N>    Plot bubble chart
+    -w <y/N>    Windowed Gantt Chart
 
 """
 
@@ -29,14 +32,13 @@ def main(argv):
     binned = False
     average = False
     bubble = False
-    area = False
     window = False
 
     # Parse the arguments passed in
     try:
         opts, args = getopt.getopt(
             argv,
-            "hi:o:r:v:b:a:s:n:w:",
+            "hi:o:r:v:b:a:s:w:",
             [
                 "ipath=",
                 "ofile=",
@@ -45,7 +47,6 @@ def main(argv):
                 "binned=",
                 "average=",
                 "bubble=",
-                "area=",
                 "window=",
             ],
         )
@@ -85,9 +86,6 @@ def main(argv):
         elif opt in ("-s", "--bubble"):
             if arg.lower() == "y":
                 bubble = True
-        elif opt in ("-n", "--area"):
-            if arg.lower() == "y":
-                area = True
         elif opt in ("-w", "--window"):
             if arg.lower() == "y":
                 window = True
@@ -100,7 +98,6 @@ def main(argv):
         with yaspin().line as sp:
             sp.text = "Plotting gantt for entire outputfile"
             plotSimpleGantt(outJobsCSV, outputfile)
-            # FIXME The above should really be an option of it's own so it can be flagged alongside the other options
 
     # If you're doing any combination of resv,bin, and bubble but not average
     elif (reservation or binned or bubble or window) and not average:
@@ -111,7 +108,6 @@ def main(argv):
             verbosity,
             binned,
             bubble,
-            area,
             reservation,
             window,
         )
@@ -127,7 +123,6 @@ def main(argv):
             verbosity,
             binned,
             bubble,
-            area,
             reservation,
             window,
         )
