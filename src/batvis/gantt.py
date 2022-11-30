@@ -277,7 +277,12 @@ def plotBinnedGanttReservations(row, totaldf, outDir, res_bounds, verbosity, max
         totaldf, windowStartTime - maxJobLen, windowFinishTime + maxJobLen
     )
     totalDf = pd.concat([cut_js["workload"], cut_js["running"], cut_js["queue"]])
-
+    for index, row in totalDf.iterrows():
+        if row["purpose"] == "reservation":
+            #TODO Why doesn't this work?
+            # print(index)
+            totalDf.drop(labels=index, axis=0, inplace=True)
+            print("Dropped reservation at index: " + str(index))
     if verbosity == True:
         print(cut_js)
     if checkForJobs(totalDf):

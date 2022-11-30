@@ -82,10 +82,10 @@ def plotBubbleChart(row, totaldf, outDir, res_bounds, verbosity, maxJobLen):
     )
     totalDf = pd.concat([cut_js["workload"], cut_js["running"], cut_js["queue"]])
     # TODO Remove the bubble representing the reservation
-    # for index, row in totalDf.iterrows():
-    #     if row["purpose"] == "reservation":
-    #         totalDf.drop(labels=index, axis=0, inplace=True)
-    #         print("Dropped reservation at index: " + str(index))
+    for index, row in totalDf.iterrows():
+        if row["purpose"] == "reservation":
+            totalDf.drop(labels=index, axis=0, inplace=True)
+            # print("Dropped reservation at index: " + str(index))
     if checkForJobs(totalDf):
         sns.set_style("whitegrid")
         sns.set_palette("flare")
