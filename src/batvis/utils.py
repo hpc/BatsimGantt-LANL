@@ -53,6 +53,29 @@ def binDfToJs(df):
     return smallJs, longJs, largeJs
 
 
+def getUtil(row, totaldf, outDir, res_bounds, maxJobLen):
+    reservationStartTime = int(row["starting_time"])
+    reservationFinishTime = int(row["finish_time"])
+    reservationExecTime = int(row["execution_time"])
+    windowSize = 169200
+    windowStartTime = reservationStartTime - windowSize
+    if windowStartTime < 0:
+        windowStartTime = 0
+    windowFinishTime = reservationFinishTime + windowSize
+    if windowFinishTime > int(totaldf["finish_time"].max()):
+        windowFinishTime = int(totaldf["finish_time"].max())
+    cut_js = cut_workload(
+        totaldf, windowStartTime - maxJobLen, windowFinishTime + maxJobLen
+    )
+    totalDf = pd.concat([cut_js["workload"], cut_js["running"], cut_js["queue"]])
+    totalDf = resetDfTimescale(totalDf, windowStartTime)
+    for index, row in totalDf.iterrows():
+        if row["purpose"] == "reservation":
+            totalDf.drop(labels=index, axis=0, inplace=True)
+    smallJs, longJs, largeJs = binDfToJs(totalDf)
+    return smallJs.utilisation, longJs.utilisation, largeJs.utilisation
+
+
 def binDf(df):
     """
     Used to sort jobs within a DF into 3 types based on runtime and requested resources and output those dataframes.
@@ -143,7 +166,9 @@ def prepDf(row, totaldf, maxJobLen, allResvDf, n):
         windowFinishTime = int(totaldf["finish_time"].max())
     cut_js = cut_workload(totaldf, windowStartTime, windowFinishTime)
     totalDf = pd.concat([cut_js["workload"], cut_js["running"], cut_js["queue"]])
-
+    for index, row in totalDf.iterrows():
+        if row["purpose"] == "reservation":
+            totalDf.drop(labels=index, axis=0, inplace=True)
     if not checkForJobs(totalDf):
         print(
             "Your dataset includes reservations surrounded by no jobs! Skipping reservation from "

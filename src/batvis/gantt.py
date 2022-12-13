@@ -1,5 +1,8 @@
-from batvis.utils import *
-from batvis.plots import *
+# from batvis.utils import *
+# from batvis.plots import *
+from utils import *
+from plots import *
+
 from evalys.visu.gantt import plot_gantt_df
 import matplotlib
 
@@ -17,7 +20,7 @@ def iterateReservations(
     window,
 ):
     """
-    Iterates over reservations and plots them based on whether or not they're binned
+    Iterates over reservations and plots them based on certain parameters
     """
     InConfig, OutConfig = loadConfigs(inputpath)
     try:
@@ -27,11 +30,12 @@ def iterateReservations(
             "ERROR! You're trying to plot reservations from a run output generated using a legacy version of batsim."
         )
         sys.exit(2)
-    totaldf, totaljs = dfFromCsv(outJobsCSV)
 
+    totaldf, totaljs = dfFromCsv(outJobsCSV)
     maxJobLen = getMaxJobLen(totaldf)
     n = 0
     reservationSet = []
+    # Iterate over the experiment's total dataframe, and when a reservation is found, plot it using one (or several) of the plotting functions.
     for index, row in totaldf.iterrows():
         if row["purpose"] == "reservation":
             if n == 0:
@@ -279,14 +283,12 @@ def plotBinnedGanttReservations(row, totaldf, outDir, res_bounds, verbosity, max
     totalDf = pd.concat([cut_js["workload"], cut_js["running"], cut_js["queue"]])
     for index, row in totalDf.iterrows():
         if row["purpose"] == "reservation":
-            #TODO Why doesn't this work?
-            # print(index)
             totalDf.drop(labels=index, axis=0, inplace=True)
-            print("Dropped reservation at index: " + str(index))
     if verbosity == True:
         print(cut_js)
     if checkForJobs(totalDf):
         smallJs, longJs, largeJs = binDfToJs(totalDf)
+        print("testing")
         saveDfPlot(
             smallJs,
             getFileName(
@@ -337,6 +339,9 @@ def plotSimpleGantt(outJobsCSV, outfile):
 def chartWindow(
     row, t0, tf, totaldf, outDir, res_bounds, verbosity, maxJobLen, reservationSet
 ):
+    """
+    Plots a window including several reservations. In this case, that number is 4.
+    """
     reservationInterval = row["allocated_resources"]
     reservationExecTime = int(row["execution_time"])
     windowSize = 169200

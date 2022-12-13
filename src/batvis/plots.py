@@ -1,5 +1,9 @@
-from batvis.utils import *
-from batvis.gantt import *
+# from batvis.utils import *
+# from batvis.gantt import *
+
+from utils import *
+from gantt import *
+
 import matplotlib
 import seaborn as sns
 from evalys.jobset import JobSet
@@ -19,6 +23,21 @@ def chartRunningAverage(inputpath, outputfile, outJobsCSV):
     windowSize = 169200
     h, m, s = InConfig["reservations-resv1"]["reservations-array"][0]["time"].split(":")
     reservationSize = int(h) * 3600 + int(m) * 60 + int(s)
+
+    # for index, row in totaldf.iterrows():
+    #     if row["purpose"] == "reservation":
+    #         smallUtil, longUtil, largeUtil = getUtil(
+    #             row,
+    #             totaldf,
+    #             outDir,
+    #             totaljs.res_bounds,
+    #             maxJobLen,
+    #         )
+
+    # print("wiggling")
+    # if not ((smallUtil and longUtil and largeUtil) == None):
+    #     # TODO Inspect these dataframes more closely and understand them
+    #     pass
 
     smallDf = pd.DataFrame()
     longDf = pd.DataFrame()
@@ -44,6 +63,7 @@ def chartRunningAverage(inputpath, outputfile, outJobsCSV):
         reservationStart=windowSize,
         reservationExec=reservationSize,
     )
+
     outFileLoc = os.path.join(
         outDir,
         "runningAverage-"

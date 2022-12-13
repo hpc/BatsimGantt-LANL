@@ -19,9 +19,15 @@ Optional options:
 
 
 import sys, getopt, os
-from batvis.utils import *
-from batvis.gantt import *
-from batvis.plots import *
+
+# from batvis.utils import *
+# from batvis.gantt import *
+# from batvis.plots import *
+
+# FIXME Stubbed imports for debugging
+from utils import *
+from gantt import *
+from plots import *
 
 
 def main(argv):
