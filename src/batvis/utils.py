@@ -228,7 +228,246 @@ def checkForJobs(df):
             return True
 
 
-# TODO The resources problem needs to be solved better
+def getNodeHours(row, totaldf, maxJobLen, windowSize):
+    reservationStartTime = int(row["starting_time"])
+    reservationFinishTime = int(row["finish_time"])
+    reservationExecTime = int(row["execution_time"])
+    reservationInterval = row["allocated_resources"]
+    windowStartTime = reservationStartTime - windowSize
+    if windowStartTime < 0:
+        windowStartTime = 0
+    windowFinishTime = reservationFinishTime + windowSize
+    if windowFinishTime > int(totaldf["finish_time"].max()):
+        windowFinishTime = int(totaldf["finish_time"].max())
+    cut_js = cut_workload(
+        totaldf, windowStartTime - maxJobLen, windowFinishTime + maxJobLen
+    )
+    totalDf = pd.concat([cut_js["workload"], cut_js["running"], cut_js["queue"]])
+    if checkForJobs(totalDf):
+        sectionSize = windowSize / 8
+        dfBefore = pd.DataFrame(
+            columns=[
+                "section",
+                "smallNodeHours",
+                "longNodeHours",
+                "largeNodeHours",
+                "totalNodeHours",
+            ]
+        )
+        dfBefore.set_index("section")
+        for i in range(0, 8):
+            smallHours = 0
+            longHours = 0
+            largeHours = 0
+            start = windowStartTime + (i * sectionSize)
+            end = start + sectionSize
+            for index, row in totalDf.iterrows():
+                if row["purpose"] == "job":
+                    # If the job starts in this section and finishes after it
+                    if (start <= row["starting_time"] <= end) and not (
+                        start <= row["finish_time"] <= end
+                    ):
+                        if (row["requested_number_of_resources"] <= 32) and (
+                            row["execution_time"] <= 28800
+                        ):
+                            smallHours += row["requested_number_of_resources"] * (
+                                row["execution_time"] - (row["finish_time"] - end)
+                            )
+                        elif (row["requested_number_of_resources"] <= 32) and (
+                            row["execution_time"] > 28800
+                        ):
+                            longHours += row["requested_number_of_resources"] * (
+                                row["execution_time"] - (row["finish_time"] - end)
+                            )
+                        elif row["requested_number_of_resources"] > 32:
+                            largeHours += row["requested_number_of_resources"] * (
+                                row["execution_time"] - (row["finish_time"] - end)
+                            )
+
+                    # If the job finishes in this section and starts before it
+                    elif (start <= row["finish_time"] <= end) and not (
+                        start <= row["starting_time"] <= end
+                    ):
+                        if (row["requested_number_of_resources"] <= 32) and (
+                            row["execution_time"] <= 28800
+                        ):
+                            smallHours += row["requested_number_of_resources"] * (
+                                row["finish_time"] - start
+                            )
+                        elif (row["requested_number_of_resources"] <= 32) and (
+                            row["execution_time"] > 28800
+                        ):
+                            longHours += row["requested_number_of_resources"] * (
+                                row["finish_time"] - start
+                            )
+                        elif row["requested_number_of_resources"] > 32:
+                            largeHours += row["requested_number_of_resources"] * (
+                                row["finish_time"] - start
+                            )
+                    # If the job starts before and ends after this section
+                    elif (row["starting_time"] <= start) and (
+                        end <= row["finish_time"]
+                    ):
+                        if (row["requested_number_of_resources"] <= 32) and (
+                            row["execution_time"] <= 28800
+                        ):
+                            smallHours += (
+                                row["requested_number_of_resources"] * sectionSize
+                            )
+                        elif (row["requested_number_of_resources"] <= 32) and (
+                            row["execution_time"] > 28800
+                        ):
+                            longHours += (
+                                row["requested_number_of_resources"] * sectionSize
+                            )
+                        elif row["requested_number_of_resources"] > 32:
+                            largeHours += (
+                                row["requested_number_of_resources"] * sectionSize
+                            )
+                    # If the job occurs entirely within this section
+                    elif (start <= row["starting_time"]) and (
+                        row["finish_time"] <= end
+                    ):
+                        if (row["requested_number_of_resources"] <= 32) and (
+                            row["execution_time"] <= 28800
+                        ):
+                            smallHours += row["requested_number_of_resources"] * (
+                                row["execution_time"]
+                            )
+                        elif (row["requested_number_of_resources"] <= 32) and (
+                            row["execution_time"] > 28800
+                        ):
+                            longHours += row["requested_number_of_resources"] * (
+                                row["execution_time"]
+                            )
+                        elif row["requested_number_of_resources"] > 32:
+                            largeHours += row["requested_number_of_resources"] * (
+                                row["execution_time"]
+                            )
+            dfBefore.loc[i] = [
+                i,
+                smallHours,
+                longHours,
+                largeHours,
+                smallHours + longHours + largeHours,
+            ]
+        dfAfter = pd.DataFrame(
+            columns=[
+                "section",
+                "smallNodeHours",
+                "longNodeHours",
+                "largeNodeHours",
+                "totalNodeHours",
+            ]
+        )
+        dfAfter.set_index("section")
+        for i in range(0, 8):
+            smallHours = 0
+            longHours = 0
+            largeHours = 0
+            start = windowFinishTime + (i * sectionSize)
+            end = start + sectionSize
+            for index, row in totalDf.iterrows():
+                if row["purpose"] == "job":
+                    # If the job starts in this section and finishes after it
+                    if (start <= row["starting_time"] <= end) and not (
+                        start <= row["finish_time"] <= end
+                    ):
+                        if (row["requested_number_of_resources"] <= 32) and (
+                            row["execution_time"] <= 28800
+                        ):
+                            smallHours += row["requested_number_of_resources"] * (
+                                row["execution_time"] - (row["finish_time"] - end)
+                            )
+                        elif (row["requested_number_of_resources"] <= 32) and (
+                            row["execution_time"] > 28800
+                        ):
+                            longHours += row["requested_number_of_resources"] * (
+                                row["execution_time"] - (row["finish_time"] - end)
+                            )
+                        elif row["requested_number_of_resources"] > 32:
+                            largeHours += row["requested_number_of_resources"] * (
+                                row["execution_time"] - (row["finish_time"] - end)
+                            )
+
+                    # If the job finishes in this section and starts before it
+                    elif (start <= row["finish_time"] <= end) and not (
+                        start <= row["starting_time"] <= end
+                    ):
+                        if (row["requested_number_of_resources"] <= 32) and (
+                            row["execution_time"] <= 28800
+                        ):
+                            smallHours += row["requested_number_of_resources"] * (
+                                row["finish_time"] - start
+                            )
+                        elif (row["requested_number_of_resources"] <= 32) and (
+                            row["execution_time"] > 28800
+                        ):
+                            longHours += row["requested_number_of_resources"] * (
+                                row["finish_time"] - start
+                            )
+                        elif row["requested_number_of_resources"] > 32:
+                            largeHours += row["requested_number_of_resources"] * (
+                                row["finish_time"] - start
+                            )
+                    # If the job starts before and ends after this section
+                    elif (row["starting_time"] <= start) and (
+                        end <= row["finish_time"]
+                    ):
+                        if (row["requested_number_of_resources"] <= 32) and (
+                            row["execution_time"] <= 28800
+                        ):
+                            smallHours += (
+                                row["requested_number_of_resources"] * sectionSize
+                            )
+                        elif (row["requested_number_of_resources"] <= 32) and (
+                            row["execution_time"] > 28800
+                        ):
+                            longHours += (
+                                row["requested_number_of_resources"] * sectionSize
+                            )
+                        elif row["requested_number_of_resources"] > 32:
+                            largeHours += (
+                                row["requested_number_of_resources"] * sectionSize
+                            )
+                    # If the job occurs entirely within this section
+                    elif (start <= row["starting_time"]) and (
+                        row["finish_time"] <= end
+                    ):
+                        if (row["requested_number_of_resources"] <= 32) and (
+                            row["execution_time"] <= 28800
+                        ):
+                            smallHours += row["requested_number_of_resources"] * (
+                                row["execution_time"]
+                            )
+                        elif (row["requested_number_of_resources"] <= 32) and (
+                            row["execution_time"] > 28800
+                        ):
+                            longHours += row["requested_number_of_resources"] * (
+                                row["execution_time"]
+                            )
+                        elif row["requested_number_of_resources"] > 32:
+                            largeHours += row["requested_number_of_resources"] * (
+                                row["execution_time"]
+                            )
+            dfAfter.loc[i] = [
+                i,
+                smallHours,
+                longHours,
+                largeHours,
+                smallHours + longHours + largeHours,
+            ]
+        return dfBefore, dfAfter
+    else:
+        print(
+            "Your dataset includes reservations surrounded by no jobs! Skipping reservation from "
+            + str(reservationStartTime)
+            + "-"
+            + str(reservationFinishTime)
+        )
+        return pd.DataFrame(), pd.DataFrame
+
+
 def getPercentageUtilization(row, totaldf, maxJobLen, windowSize):
     reservationStartTime = int(row["starting_time"])
     reservationFinishTime = int(row["finish_time"])
@@ -250,23 +489,23 @@ def getPercentageUtilization(row, totaldf, maxJobLen, windowSize):
         columns=[
             "section",
             "small",
-            "smallResources",
+            # "smallResources",
             "long",
-            "longResources",
+            # "longResources",
             "large",
-            "largeResources",
+            # "largeResources",
             "total",
-            "totalResources",
+            # "totalResources",
         ]
     )
     dfBefore.set_index("section")
     for i in range(0, 8):
         smallCount = 0
-        smallResources = 0
+        # smallResources = 0
         longCount = 0
-        longResources = 0
+        # longResources = 0
         largeCount = 0
-        largeResources = 0
+        # largeResources = 0
         start = windowStartTime + sectionSize * i
         end = start + sectionSize
         for index, row in totalDf.iterrows():
@@ -280,47 +519,47 @@ def getPercentageUtilization(row, totaldf, maxJobLen, windowSize):
                         row["execution_time"] <= 28800
                     ):
                         smallCount += 1
-                        smallResources += row["requested_number_of_resources"]
+                        # smallResources += row["requested_number_of_resources"]
                     elif (row["requested_number_of_resources"] <= 32) and (
                         row["execution_time"] > 28800
                     ):
                         longCount += 1
-                        longResources += row["requested_number_of_resources"]
+                        # longResources += row["requested_number_of_resources"]
                     elif row["requested_number_of_resources"] > 32:
                         largeCount += 1
-                        largeResources += row["requested_number_of_resources"]
+                        # largeResources += row["requested_number_of_resources"]
         dfBefore.loc[i] = [
             i,
             smallCount,
-            smallResources,
+            # smallResources,
             longCount,
-            longResources,
+            # longResources,
             largeCount,
-            largeResources,
+            # largeResources,
             smallCount + longCount + largeCount,
-            smallResources + longResources + largeResources,
+            # smallResources + longResources + largeResources,
         ]
     dfAfter = pd.DataFrame(
         columns=[
             "section",
             "small",
-            "smallResources",
+            # "smallResources",
             "long",
-            "longResources",
+            # "longResources",
             "large",
-            "largeResources",
+            # "largeResources",
             "total",
-            "totalResources",
+            # "totalResources",
         ]
     )
     dfAfter.set_index("section")
     for i in range(0, 8):
         smallCount = 0
-        smallResources = 0
+        # smallResources = 0
         longCount = 0
-        longResources = 0
+        # longResources = 0
         largeCount = 0
-        largeResources = 0
+        # largeResources = 0
         start = reservationFinishTime + sectionSize * i
         end = start + sectionSize
         for index, row in totalDf.iterrows():
@@ -334,25 +573,25 @@ def getPercentageUtilization(row, totaldf, maxJobLen, windowSize):
                         row["execution_time"] <= 28800
                     ):
                         smallCount += 1
-                        smallResources += row["requested_number_of_resources"]
+                        # smallResources += row["requested_number_of_resources"]
                     elif (row["requested_number_of_resources"] <= 32) and (
                         row["execution_time"] > 28800
                     ):
                         longCount += 1
-                        longResources += row["requested_number_of_resources"]
+                        # longResources += row["requested_number_of_resources"]
                     elif row["requested_number_of_resources"] > 32:
                         largeCount += 1
-                        largeResources += row["requested_number_of_resources"]
+                        # largeResources += row["requested_number_of_resources"]
         dfAfter.loc[i] = [
             i,
             smallCount,
-            smallResources,
+            # smallResources,
             longCount,
-            longResources,
+            # longResources,
             largeCount,
-            largeResources,
+            # largeResources,
             smallCount + longCount + largeCount,
-            smallResources + longResources + largeResources,
+            # smallResources + longResources + largeResources,
         ]
     return dfBefore, dfAfter
 

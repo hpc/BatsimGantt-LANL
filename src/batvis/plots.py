@@ -15,6 +15,95 @@ from evalys.jobset import JobSet
 
 
 def chartRunningAverage(inputpath, outputfile, outJobsCSV):
+    InConfig, OutConfig = loadConfigs(inputpath)
+    outDir = getOutputDir(InConfig, outputfile)
+    totaldf, totaljs = dfFromCsv(outJobsCSV)
+    maxJobLen = getMaxJobLen(totaldf)
+
+    windowSize = 169200
+    h, m, s = InConfig["reservations-resv1"]["reservations-array"][0]["time"].split(":")
+    reservationSize = int(h) * 3600 + int(m) * 60 + int(s)
+    nodeHours = []
+    for index, row in totaldf.iterrows():
+        if row["purpose"] == "reservation":
+            dfBefore, dfAfter = getNodeHours(row, totaldf, maxJobLen, windowSize)
+            if not dfBefore.empty and not dfAfter.empty:
+                nodeHours.append([dfBefore, dfAfter])
+    dfBeforeMaster = pd.DataFrame(
+        columns=[
+            "section",
+            "small",
+            "long",
+            "large",
+            "total",
+        ]
+    )
+    dfAfterMaster = pd.DataFrame(
+        columns=[
+            "section",
+            "small",
+            "long",
+            "large",
+            "total",
+        ]
+    )
+    # For each reservation that we have utilization percentages for
+    # TODO Extract data, average it, and insert it into the master dataframe
+
+    # Iterate over each section (before/after)
+    for section in range(0, 8):
+
+        # Create lists to hold the values of each section type at each this in time
+        beforeSmallList = []
+        afterSmallList = []
+        beforeLongList = []
+        afterLongList = []
+        beforeLargeList = []
+        afterLargeList = []
+        beforeTotalList = []
+        afterTotalList = []
+        for resv in range(len(nodeHours)):
+            beforeSmallList.append(nodeHours[resv][0].loc[section]["smallNodeHours"])
+            afterSmallList.append(nodeHours[resv][1].loc[section]["smallNodeHours"])
+            beforeLongList.append(nodeHours[resv][0].loc[section]["longNodeHours"])
+            afterLongList.append(nodeHours[resv][1].loc[section]["longNodeHours"])
+            beforeLargeList.append(nodeHours[resv][0].loc[section]["largeNodeHours"])
+            afterLargeList.append(nodeHours[resv][1].loc[section]["largeNodeHours"])
+            beforeTotalList.append(nodeHours[resv][0].loc[section]["totalNodeHours"])
+            afterTotalList.append(nodeHours[resv][1].loc[section]["totalNodeHours"])
+        # Calculate the average of each section type at each time
+        beforeSmall = sum(beforeSmallList) / len(beforeSmallList)
+        afterSmall = sum(afterSmallList) / len(afterSmallList)
+        beforeLong = sum(beforeLongList) / len(beforeLongList)
+        afterLong = sum(afterLongList) / len(afterLongList)
+        beforeLarge = sum(beforeLargeList) / len(beforeLargeList)
+        afterLarge = sum(afterLargeList) / len(afterLargeList)
+        beforeTotal = sum(beforeTotalList) / len(beforeTotalList)
+        afterTotal = sum(afterTotalList) / len(afterTotalList)
+
+        # Insert the average into the master dataframe
+        dfBeforeMaster.loc[section] = [
+            section,
+            beforeSmall / 3600,
+            beforeLong / 3600,
+            beforeLarge / 3600,
+            beforeTotal / 3600,
+        ]
+        dfAfterMaster.loc[section] = [
+            section,
+            afterSmall / 3600,
+            afterLong / 3600,
+            afterLarge / 3600,
+            afterTotal / 3600,
+        ]
+    # TODO Add total utilization averages here
+    # TODO Unhardcode this
+    print("Max node hours per section: " + str(1490 * ((windowSize / 3600) / 8)))
+    print(dfBeforeMaster)
+    print(dfAfterMaster)
+
+
+def chartRunningAveragePercent(inputpath, outputfile, outJobsCSV):
     """
     Charts the running average of cluster utilization over the entire experimen t
     """
