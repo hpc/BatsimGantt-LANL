@@ -4,6 +4,9 @@
 from utils import *
 from gantt import *
 
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
 import matplotlib
 import seaborn as sns
 from evalys.jobset import JobSet
@@ -120,7 +123,7 @@ def chartRunningAverage(inputpath, outputfile, outJobsCSV):
             # afterTotal * reservationSize,
         ]
     overallSmallCount, overallLongCount, overallLargeCount = getTotalUtilizations(
-        totaldf, maxJobLen, windowSize
+        totaldf
     )
     totalCount = overallSmallCount + overallLongCount + overallLargeCount
     overallSmall = (overallSmallCount / totalCount) * 100
@@ -133,6 +136,41 @@ def chartRunningAverage(inputpath, outputfile, outJobsCSV):
     print(dfBeforeMaster)
     print("Job counts by type per section after reservation")
     print(dfAfterMaster)
+
+    # TODO Chart the needful
+    barWidth = 1
+    names = ("0", "1", "2", "3", "4", "5", "6", "7")
+    plt.bar(
+        dfBeforeMaster["section"],
+        dfBeforeMaster["small"],
+        color="b",
+        width=barWidth,
+        edgecolor="white",
+        label="small",
+    )
+    plt.bar(
+        dfBeforeMaster["section"],
+        dfBeforeMaster["long"],
+        bottom=dfBeforeMaster["small"],
+        color="g",
+        width=barWidth,
+        edgecolor="white",
+        label="long",
+    )
+    plt.bar(
+        dfBeforeMaster["section"],
+        dfBeforeMaster["large"],
+        bottom=dfBeforeMaster["small"] + dfBeforeMaster["long"],
+        color="r",
+        width=barWidth,
+        edgecolor="white",
+        label="large",
+    )
+    plt.xticks(dfBeforeMaster["section"], names)
+    plt.xlabel("Section")
+    plt.legend(loc="upper left", bbox_to_anchor=(1, 1), ncol=1)
+
+    plt.show()
 
     # outFileLoc = os.path.join(
     #     outDir,

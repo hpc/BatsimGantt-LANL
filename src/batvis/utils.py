@@ -13,7 +13,7 @@ def getMaxJobLen(totaldf):
     :returns: the length of the longest job in the df
     """
     maxJobLen = totaldf["execution_time"].max()
-    print("Maximum job length parsed as: " + str(maxJobLen))
+    # print("Maximum job length parsed as: " + str(maxJobLen))
     return maxJobLen
 
 
@@ -357,7 +357,7 @@ def getPercentageUtilization(row, totaldf, maxJobLen, windowSize):
     return dfBefore, dfAfter
 
 
-def getTotalUtilizations(totaldf, maxJobLen, windowSize):
+def getTotalUtilizations(totaldf):
     overallSmallCount = 0
     overallSmallResources = 0
     overallLongCount = 0
