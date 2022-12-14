@@ -4,7 +4,6 @@
 from utils import *
 from gantt import *
 
-import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import matplotlib
@@ -20,7 +19,11 @@ def chartRunningAverage(inputpath, outputfile, outJobsCSV):
     totaldf, totaljs = dfFromCsv(outJobsCSV)
     maxJobLen = getMaxJobLen(totaldf)
 
+    # TODO Unhardcode this
+    clusterSize = 1490
+    numberSections = 8
     windowSize = 169200
+
     h, m, s = InConfig["reservations-resv1"]["reservations-array"][0]["time"].split(":")
     reservationSize = int(h) * 3600 + int(m) * 60 + int(s)
     nodeHours = []
@@ -51,7 +54,7 @@ def chartRunningAverage(inputpath, outputfile, outJobsCSV):
     # TODO Extract data, average it, and insert it into the master dataframe
 
     # Iterate over each section (before/after)
-    for section in range(0, 8):
+    for section in range(0, numberSections):
 
         # Create lists to hold the values of each section type at each this in time
         beforeSmallList = []
@@ -96,183 +99,85 @@ def chartRunningAverage(inputpath, outputfile, outJobsCSV):
             afterLarge / 3600,
             afterTotal / 3600,
         ]
-    # TODO Add total utilization averages here
-    # TODO Unhardcode this
-    print("Max node hours per section: " + str(1490 * ((windowSize / 3600) / 8)))
+    maxNodeHours = clusterSize * ((windowSize / 3600) / numberSections)
+    print("Max node hours per section: " + str(maxNodeHours))
     print(dfBeforeMaster)
     print(dfAfterMaster)
+    makePercentageGraph(
+        dfBeforeMaster, outDir, InConfig, maxNodeHours, "nodeHoursChartBefore"
+    )
+    makePercentageGraph(
+        dfAfterMaster, outDir, InConfig, maxNodeHours, "nodeHoursChartAfter"
+    )
 
 
-def chartRunningAveragePercent(inputpath, outputfile, outJobsCSV):
+def makePercentageGraph(masterDf, outDir, InConfig, maxNodeHours, name):
     """
     Charts the running average of cluster utilization over the entire experimen t
     """
-    InConfig, OutConfig = loadConfigs(inputpath)
-    outDir = getOutputDir(InConfig, outputfile)
-    totaldf, totaljs = dfFromCsv(outJobsCSV)
-    maxJobLen = getMaxJobLen(totaldf)
-
-    windowSize = 169200
-    h, m, s = InConfig["reservations-resv1"]["reservations-array"][0]["time"].split(":")
-    reservationSize = int(h) * 3600 + int(m) * 60 + int(s)
-    utilPercentages = []
-    for index, row in totaldf.iterrows():
-        if row["purpose"] == "reservation":
-            dfBefore, dfAfter = getPercentageUtilization(
-                row, totaldf, maxJobLen, windowSize
-            )
-            utilPercentages.append([dfBefore, dfAfter])
-    dfBeforeMaster = pd.DataFrame(
-        columns=[
-            "section",
-            "small",
-            # "smallResources",
-            "long",
-            # "longResources",
-            "large",
-            # "largeResources",
-            "total",
-            # "totalResources",
-        ]
-    )
-    dfAfterMaster = pd.DataFrame(
-        columns=[
-            "section",
-            "small",
-            # "smallResources",
-            "long",
-            # "longResources",
-            "large",
-            # "largeResources",
-            "total",
-            # "totalResources",
-        ]
-    )
-    # For each reservation that we have utilization percentages for
-    # TODO Extract data, average it, and insert it into the master dataframe
-
-    # Iterate over each section (before/after)
-    for section in range(0, 8):
-        # Create lists to hold the values of each section type at each this in time
-        beforeSmallList = []
-        afterSmallList = []
-        beforeLongList = []
-        afterLongList = []
-        beforeLargeList = []
-        afterLargeList = []
-        beforeTotalList = []
-        afterTotalList = []
-        for resv in range(len(utilPercentages)):
-            beforeSmallList.append(utilPercentages[resv][0].loc[section]["small"])
-            afterSmallList.append(utilPercentages[resv][1].loc[section]["small"])
-            beforeLongList.append(utilPercentages[resv][0].loc[section]["long"])
-            afterLongList.append(utilPercentages[resv][1].loc[section]["long"])
-            beforeLargeList.append(utilPercentages[resv][0].loc[section]["large"])
-            afterLargeList.append(utilPercentages[resv][1].loc[section]["large"])
-            beforeTotalList.append(utilPercentages[resv][0].loc[section]["total"])
-            afterTotalList.append(utilPercentages[resv][1].loc[section]["total"])
-        # Calculate the average of each section type at each time
-        beforeSmall = sum(beforeSmallList) / len(beforeSmallList)
-        afterSmall = sum(afterSmallList) / len(afterSmallList)
-        beforeLong = sum(beforeLongList) / len(beforeLongList)
-        afterLong = sum(afterLongList) / len(afterLongList)
-        beforeLarge = sum(beforeLargeList) / len(beforeLargeList)
-        afterLarge = sum(afterLargeList) / len(afterLargeList)
-        beforeTotal = sum(beforeTotalList) / len(beforeTotalList)
-        afterTotal = sum(afterTotalList) / len(afterTotalList)
-        # Convert each number into a percentage
-        beforeSmall = (beforeSmall / beforeTotal) * 100
-        afterSmall = (afterSmall / afterTotal) * 100
-        beforeLong = (beforeLong / beforeTotal) * 100
-        afterLong = (afterLong / afterTotal) * 100
-        beforeLarge = (beforeLarge / beforeTotal) * 100
-        afterLarge = (afterLarge / afterTotal) * 100
-
-        # Insert the average into the master dataframe
-        dfBeforeMaster.loc[section] = [
-            section,
-            beforeSmall,
-            # beforeSmall * reservationSize,
-            beforeLong,
-            # beforeLong * reservationSize,
-            beforeLarge,
-            # beforeLarge * reservationSize,
-            beforeTotal,
-            # beforeTotal * reservationSize,
-        ]
-        dfAfterMaster.loc[section] = [
-            section,
-            afterSmall,
-            # afterSmall * reservationSize,
-            afterLong,
-            # afterLong * reservationSize,
-            afterLarge,
-            # afterLarge * reservationSize,
-            afterTotal,
-            # afterTotal * reservationSize,
-        ]
-    overallSmallCount, overallLongCount, overallLargeCount = getTotalUtilizations(
-        totaldf
-    )
-    totalCount = overallSmallCount + overallLongCount + overallLargeCount
-    overallSmall = (overallSmallCount / totalCount) * 100
-    overallLong = (overallLongCount / totalCount) * 100
-    overallLarge = (overallLargeCount / totalCount) * 100
-    print("Overall small: " + str(overallSmall))
-    print("Overall long: " + str(overallLong))
-    print("Overall large: " + str(overallLarge))
-    print("Job counts by type per section before reservation")
-    print(dfBeforeMaster)
-    print("Job counts by type per section after reservation")
-    print(dfAfterMaster)
 
     # TODO Chart the needful
     barWidth = 1
+
+    # TODO Unhardcode this
     names = ("0", "1", "2", "3", "4", "5", "6", "7")
     plt.bar(
-        dfBeforeMaster["section"],
-        dfBeforeMaster["small"],
+        masterDf["section"],
+        (masterDf["small"] / maxNodeHours) * 100,
         color="b",
         width=barWidth,
         edgecolor="white",
         label="small",
     )
     plt.bar(
-        dfBeforeMaster["section"],
-        dfBeforeMaster["long"],
-        bottom=dfBeforeMaster["small"],
+        masterDf["section"],
+        (masterDf["long"] / maxNodeHours) * 100,
+        bottom=((masterDf["small"] / maxNodeHours) * 100),
         color="g",
         width=barWidth,
         edgecolor="white",
         label="long",
     )
     plt.bar(
-        dfBeforeMaster["section"],
-        dfBeforeMaster["large"],
-        bottom=dfBeforeMaster["small"] + dfBeforeMaster["long"],
+        masterDf["section"],
+        (masterDf["large"] / maxNodeHours) * 100,
+        bottom=((masterDf["small"] / maxNodeHours) * 100)
+        + ((masterDf["long"] / maxNodeHours) * 100),
         color="r",
         width=barWidth,
         edgecolor="white",
         label="large",
     )
-    plt.xticks(dfBeforeMaster["section"], names)
+    plt.xticks(masterDf["section"], names)
     plt.xlabel("Section")
     plt.legend(loc="upper left", bbox_to_anchor=(1, 1), ncol=1)
 
-    plt.show()
+    # plt.show()
 
-    # outFileLoc = os.path.join(
-    #     outDir,
-    #     "runningAverage-"
-    #     + InConfig["batsched-policy"]
-    #     + datetime.now().strftime("%H:%M:%S"),
-    # )
-    # matplotlib.pyplot.savefig(
-    #     outFileLoc,
-    #     dpi=300,
-    # )
-    # matplotlib.pyplot.close()
-    # print("\nSaved figure to: " + outFileLoc)
+    masterDf.to_csv(
+        os.path.join(
+            outDir,
+            "runningAverage-"
+            + InConfig["batsched-policy"]
+            + datetime.now().strftime("%H:%M:%S")
+            + name
+            + ".csv",
+        )
+    )
+
+    outFileLoc = os.path.join(
+        outDir,
+        "runningAverage-"
+        + InConfig["batsched-policy"]
+        + datetime.now().strftime("%H:%M:%S")
+        + name,
+    )
+    matplotlib.pyplot.savefig(
+        outFileLoc,
+        dpi=300,
+    )
+    matplotlib.pyplot.close()
+    print("\nSaved figure to: " + outFileLoc)
 
 
 def plotBubbleChart(row, totaldf, outDir, res_bounds, verbosity, maxJobLen):
