@@ -16,7 +16,6 @@ def chartRunningAverage(inputpath, outputfile, outJobsCSV):
     totaldf, totaljs = dfFromCsv(outJobsCSV)
     maxJobLen = getMaxJobLen(totaldf)
 
-    # TODO Unhardcode this
     windowSize = 169200
     h, m, s = InConfig["reservations-resv1"]["reservations-array"][0]["time"].split(":")
     reservationSize = int(h) * 3600 + int(m) * 60 + int(s)
@@ -65,7 +64,6 @@ def plotBubbleChart(row, totaldf, outDir, res_bounds, verbosity, maxJobLen):
     """
     reservationStartTime = int(row["starting_time"])
     reservationFinishTime = int(row["finish_time"])
-    # FIXME WindowSize
     windowSize = 169200
     windowStartTime = reservationStartTime - windowSize
     if windowStartTime < 0:
@@ -84,6 +82,10 @@ def plotBubbleChart(row, totaldf, outDir, res_bounds, verbosity, maxJobLen):
     )
     totalDf = pd.concat([cut_js["workload"], cut_js["running"], cut_js["queue"]])
     # TODO Remove the bubble representing the reservation
+    # for index, row in totalDf.iterrows():
+    #     if row["purpose"] == "reservation":
+    #         totalDf.drop(labels=index, axis=0, inplace=True)
+    #         print("Dropped reservation at index: " + str(index))
     if checkForJobs(totalDf):
         sns.set_style("whitegrid")
         sns.set_palette("flare")

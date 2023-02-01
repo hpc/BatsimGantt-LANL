@@ -1,9 +1,6 @@
 from utils import *
 from plots import *
 from evalys.visu.gantt import plot_gantt_df
-from evalys.visu.legacy import (
-    plot_gantt,
-)
 import matplotlib
 
 matplotlib.use("MacOSX")  # Comment this line if you're not using macos
@@ -16,7 +13,6 @@ def iterateReservations(
     verbosity,
     binned,
     bubble,
-    area,
     reservation,
     window,
 ):
@@ -52,7 +48,7 @@ def iterateReservations(
                 # try:
 
                 # Handle individual cases first
-                if reservation and not (binned or bubble or area):
+                if reservation and not (binned or bubble):
                     print("Plotting gantt charts for reservations! ")
                     plotReservationGantt(
                         row,
@@ -62,7 +58,7 @@ def iterateReservations(
                         verbosity,
                         maxJobLen,
                     )
-                elif binned and not (reservation or bubble or area):
+                elif binned and not (reservation or bubble):
                     print("Plotting binned gantt charts with utilization plots")
                     plotBinnedGanttReservations(
                         row,
@@ -72,19 +68,9 @@ def iterateReservations(
                         verbosity,
                         maxJobLen,
                     )
-                elif bubble and not (reservation or binned or area):
+                elif bubble and not (reservation or binned):
                     print("Plotting bubble charts for reservations")
                     plotBubbleChart(
-                        row,
-                        totaldf,
-                        outDir,
-                        totaljs.res_bounds,
-                        verbosity,
-                        maxJobLen,
-                    )
-                elif area and not (reservation or bubble or binned):
-                    print("Plotting stacked area chart")
-                    plotStackedArea(
                         row,
                         totaldf,
                         outDir,
@@ -117,16 +103,6 @@ def iterateReservations(
                     if bubble:
                         print("Plotting bubble charts for reservations")
                         plotBubbleChart(
-                            row,
-                            totaldf,
-                            outDir,
-                            totaljs.res_bounds,
-                            verbosity,
-                            maxJobLen,
-                        )
-                    if area:
-                        print("Plotting stacked area chart")
-                        plotStackedArea(
                             row,
                             totaldf,
                             outDir,
@@ -406,3 +382,18 @@ def chartWindow(
         )
     else:
         print("Empty dataframe! Skipping window from: " + str(t0) + "-" + str(tf))
+
+
+def chartTimeline(inputpath, outfile, outjobscsv):
+    with open(outjobscsv) as f:
+        fig, ax = matplotlib.pyplot.subplots(figsize=(16, 30))
+
+        js = JobSet.from_csv(outjobscsv)
+        js.plot(timeline=True)
+        matplotlib.pyplot.savefig(
+            outfile,
+            dpi=300,
+        )
+        matplotlib.pyplot.show()
+        matplotlib.pyplot.close()
+        print("\nSaved figure to: " + outfile)

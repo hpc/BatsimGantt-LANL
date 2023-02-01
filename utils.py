@@ -1,6 +1,5 @@
-from curses import window
 from yaspin import yaspin
-import sys, getopt, os, json
+import sys, os, json
 from datetime import datetime
 from evalys.jobset import JobSet
 from evalys.utils import cut_workload
@@ -135,7 +134,6 @@ def prepDf(row, totaldf, maxJobLen, allResvDf, n):
     reservationFinishTime = int(row["finish_time"])
     reservationExecTime = int(row["execution_time"])
     reservationInterval = row["allocated_resources"]
-    # FIXME WindowSize
     windowSize = 169200
     windowStartTime = reservationStartTime - windowSize
     if windowStartTime < 0:
