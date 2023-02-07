@@ -327,11 +327,12 @@ def plotSimpleGantt(outJobsCSV, outfile):
             elif cont == "n":
                 sys.exit(2)
         js = JobSet.from_csv(outJobsCSV)
-        js.plot(with_gantt=True)
-        matplotlib.pyplot.savefig(
-            outfile,
-            dpi=300,
-        )
+        js.plot(with_gantt=True, simple=True)
+        matplotlib.pyplot.show()
+        # matplotlib.pyplot.savefig(
+        #     outfile,
+        #     dpi=300,
+        # )
         matplotlib.pyplot.close()
         print("\nSaved figure to: " + outfile)
 

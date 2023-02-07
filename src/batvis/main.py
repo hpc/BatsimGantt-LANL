@@ -45,11 +45,7 @@ def main(argv):
     try:
         opts, args = getopt.getopt(
             argv,
-<<<<<<< HEAD:main.py
             "hi:o:r:v:b:a:s:w:t:",
-=======
-            "hi:o:r:v:b:a:s:w:",
->>>>>>> 170cecaea1134ed29cd9aee6b7ba19966194059a:src/batvis/main.py
             [
                 "ipath=",
                 "ofile=",
@@ -157,14 +153,6 @@ def main(argv):
             inputpath,
             outputfile,
             outJobsCSV,
-<<<<<<< HEAD:main.py
-=======
-            verbosity,
-            binned,
-            bubble,
-            reservation,
-            window,
->>>>>>> 170cecaea1134ed29cd9aee6b7ba19966194059a:src/batvis/main.py
         )
 
     # If your options are bad
