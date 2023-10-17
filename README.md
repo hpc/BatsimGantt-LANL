@@ -10,11 +10,11 @@ Note: Installation assumes that you are already using the batsim4 repo from [her
 ## Usage
 Execute this program by running `python3 -m batvis.main [options]`. You can also call the modules batvis.main, batvis.gantt, batvis.plots, and batvis.utils separately from within a python script. This is the format for running this program:
 
-``` python3 -m batvis.main -i <inputpath> [-o <outputfile>] [-r <y/N>] [-b <y/N] [-a <y/N>] [-s <y/N>] [-w <y/N>] ```
+``` python3 -m batvis.main -i <inputpath> [-o <outputfile>] [-r <y/N>] [-s <y/N>] [-w <y/N>] ```
 
 in practice, this looks like this:
 
-``` python3 -m batvis.main -i/home/vivi/experiments/110822/Steve_reservations_90k_tests/12_half_100exp/experiment_1/id_100 -o/tmp/testing -ry -wy -sy -ay -by```
+``` python3 -m batvis.main -i/home/vivi/experiments/110822/Steve_reservations_90k_tests/12_half_100exp/experiment_1/id_100 -o/tmp/testing -ry -wy -sy```
 
 you can run it with as many or as few options as you want. For example, to only generate window plots:
 
@@ -25,7 +25,5 @@ The options are detailed below:
 | Option | Description |
 | --- | --- |
 | -r | Gantt charts for each reservation |
-| -b | Binned gantt charts and utilization plots for each reservation |
-| -a | Utilization plot showing average utilization over the course of the experiment |
 | -s | Bubble plots for each reservation |
 | -w | Gantt charts generated for a window containing 4 reservations |

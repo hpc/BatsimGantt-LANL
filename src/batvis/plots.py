@@ -1,8 +1,8 @@
-# from batvis.utils import *
-# from batvis.gantt import *
+from batvis.utils import *
+from batvis.gantt import *
 
-from utils import *
-from gantt import *
+# from utils import *
+# from gantt import *
 
 import matplotlib.pyplot as plt
 import pandas as pd

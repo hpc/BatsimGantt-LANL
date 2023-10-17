@@ -20,14 +20,14 @@ Optional options:
 
 import sys, getopt, os
 
-# from batvis.utils import *
-# from batvis.gantt import *
-# from batvis.plots import *
+from batvis.utils import *
+from batvis.gantt import *
+from batvis.plots import *
 
 # FIXME Stubbed imports for debugging
-from utils import *
-from gantt import *
-from plots import *
+# from utils import *
+# from gantt import *
+# from plots import *
 
 
 def main(argv):
@@ -131,7 +131,7 @@ def main(argv):
 
     # #  If you're doing any combo of resv, bin, and bubble and also average
     # elif (reservation or binned or bubble or window) and average:
-    #     chartRunningAverage(inputpath, outputfile, outJobsCSV)
+        # chartRunningAverage(inputpath, outputfile, outJobsCSV)
 
     #     iterateReservations(
     #         inputpath,

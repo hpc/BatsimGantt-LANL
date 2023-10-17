@@ -1,7 +1,7 @@
-# from batvis.utils import *
-# from batvis.plots import *
-from utils import *
-from plots import *
+from batvis.utils import *
+from batvis.plots import *
+# from utils import *
+# from plots import *
 
 from evalys.visu.gantt import plot_gantt_df
 import matplotlib
@@ -116,7 +116,7 @@ def iterateReservations(
                         )
                 # except Exception as e:
             if window == True:
-                if n == 4:
+                if n == 8:
                     n = 0
                     tf = row["finish_time"]
                     with yaspin().line as sp:
