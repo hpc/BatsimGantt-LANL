@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="batvis",
-    version="0.1.0",
+    version="1.0.0",
     author="Vivian Hafener",
     author_email="vhafener@lanl.gov",
     description="A package that generates charts for batsim outputs",
