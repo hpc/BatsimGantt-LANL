@@ -13,11 +13,11 @@ Execute this program by running `python3 -m batvis [options]`. You can also call
 
 in practice, this looks like this:
 
-``` python3 -m batvis -i/home/vivi/experiments/110822/Steve_reservations_90k_tests/12_half_100exp/experiment_1/id_100 -o/tmp/testing -ry -wy -sy```
+``` python3 -m batvis -i/home/vivi/experiments/110822/reservations_90k_tests/12_half_100exp/experiment_1/id_100 -o/tmp/testing -ry -wy -sy```
 
 you can run it with as many or as few options as you want. For example, to only generate window plots:
 
-``` python3 -m batvis -i/home/vivi/experiments/110822/Steve_reservations_90k_tests/12_half_100exp/experiment_1/id_100 -o/tmp/testing -wy```
+``` python3 -m batvis -i/home/vivi/experiments/110822/reservations_90k_tests/12_half_100exp/experiment_1/id_100 -o/tmp/testing -wy```
 
 The options are detailed below:
 
