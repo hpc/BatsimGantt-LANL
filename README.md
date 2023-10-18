@@ -4,21 +4,22 @@ Batvis is a tool to assist in the generation of a variety of plots from data pro
 Note: Installation assumes that you are already using the batsim4 repo from [here]() configured with the batsched4 repo from [here]().
 
 1. Clone this repo and the evalys repo from [here](https://gitlab.newmexicoconsortium.org/lanl-ccu/evalys). 
-2. Enter the local directory for the evalys repo and run `pip install .` to install my modified version of evalys. 
-3. Enter the local directory for this repo and run `pip install .` to install this program. 
+2. Change to the macOS branch of this repo by running `cd batsimGantt && git checkout macOS && cd ..`
+3. Change to the dev branch of the evalys repo by running `cd evalys && git checkout dev && cd ..`
+4. Run `pip install ./evalys && pip install ./batsimGantt` to install both the modified evalys library and this program
 
 ## Usage
-Execute this program by running `python3 -m batvis.main [options]`. You can also call the modules batvis.main, batvis.gantt, batvis.plots, and batvis.utils separately from within a python script. This is the format for running this program:
+Execute this program by running `python3 -m batvis [options]`. You can also call the modules batvis.main, batvis.gantt, batvis.plots, and batvis.utils separately from within a python script. This is the format for running this program:
 
-``` python3 -m batvis.main -i <inputpath> [-o <outputfile>] [-r <y/N>] [-s <y/N>] [-w <y/N>] ```
+``` python3 -m batvis -i <inputpath> [-o <outputfile>] [-r <y/N>] [-s <y/N>] [-w <y/N>] ```
 
 in practice, this looks like this:
 
-``` python3 -m batvis.main -i/home/vivi/experiments/110822/Steve_reservations_90k_tests/12_half_100exp/experiment_1/id_100 -o/tmp/testing -ry -wy -sy```
+``` python3 -m batvis -i/home/vivi/experiments/110822/Steve_reservations_90k_tests/12_half_100exp/experiment_1/id_100 -o/tmp/testing -ry -wy -sy```
 
 you can run it with as many or as few options as you want. For example, to only generate window plots:
 
-``` python3 -m batvis.main -i/home/vivi/experiments/110822/Steve_reservations_90k_tests/12_half_100exp/experiment_1/id_100 -o/tmp/testing -wy```
+``` python3 -m batvis -i/home/vivi/experiments/110822/Steve_reservations_90k_tests/12_half_100exp/experiment_1/id_100 -o/tmp/testing -wy```
 
 The options are detailed below:
 
