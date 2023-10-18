@@ -24,12 +24,6 @@ from batvis.utils import *
 from batvis.gantt import *
 from batvis.plots import *
 
-# FIXME Stubbed imports for debugging
-# from utils import *
-# from gantt import *
-# from plots import *
-
-
 def main(argv):
     inputpath = ""
     outputfile = ""
@@ -52,26 +46,25 @@ def main(argv):
                 "resv=",
                 "verbosity=",
                 "binned=",
-                "average=",
                 "bubble=",
                 "window=",
             ],
         )
     except getopt.GetoptError:
         print(
-            "Option error! See usage below:\npython3 main.py -i <inputpath> [-o <outputfile>] [-r <y/N>] [-v <y/N>] [-b <y/N>] [-a <y/N>] [-s <y/N>] [-n <y/N>] [-w <y/N>] [-t <y/N>]"
+            "Option error! See usage below:\npython3 main.py -i <inputpath> [-o <outputfile>] [-r <y/N>] [-v <y/N>] [-b <y/N>] [-s <y/N>] [-n <y/N>] [-w <y/N>] [-t <y/N>]"
         )
         sys.exit(2)
     for opt, arg in opts:
         if opt == "-h":
             print(
-                "Help menu:\npython3 main.py -i <inputpath> [-o <outputfile>] [-r <y/N>] [-v <y/N>] [-b <y/N] [-a <y/N>] [-s <y/N>] [-n <y/N>] [-w <y/N>] [-t <y/N>]"
+                "Help menu:\npython3 main.py -i <inputpath> [-o <outputfile>] [-r <y/N>] [-v <y/N>] [-b <y/N] [-s <y/N>] [-n <y/N>] [-w <y/N>] [-t <y/N>]"
             )
             sys.exit(2)
         elif opt in ("-i", "--ipath"):
             if arg == "":
                 print(
-                    "python3 main.py -i <inputpath> [-o <outputfile>] [-r <y/N>] [-v <y/N>] [-b <y/N] [-a <y/N>] [-s <y/N>] [-n <y/N>] [-w <y/N>] [-t <y/N>]\n Please supply an input path!"
+                    "python3 main.py -i <inputpath> [-o <outputfile>] [-r <y/N>] [-v <y/N>] [-b <y/N] [-s <y/N>] [-n <y/N>] [-w <y/N>] [-t <y/N>]\n Please supply an input path!"
                 )
                 sys.exit(2)
             else:
@@ -87,9 +80,6 @@ def main(argv):
         elif opt in ("-b", "--binned"):
             if arg.lower() == "y":
                 binned = True
-        elif opt in ("-a", "--average"):
-            if arg.lower() == "y":
-                average = True
         elif opt in ("-s", "--bubble"):
             if arg.lower() == "y":
                 bubble = True
@@ -107,7 +97,6 @@ def main(argv):
     if (
         not reservation
         and not binned
-        and not average
         and not bubble
         and not window
         and not timeline
@@ -117,7 +106,7 @@ def main(argv):
             plotSimpleGantt(outJobsCSV, outputfile)
 
     # If you're doing any combination of resv,bin, and bubble but not average
-    elif (reservation or binned or bubble or window) and not average:
+    elif reservation or binned or bubble or window:
         iterateReservations(
             inputpath,
             outputfile,
@@ -128,25 +117,6 @@ def main(argv):
             reservation,
             window,
         )
-
-    # #  If you're doing any combo of resv, bin, and bubble and also average
-    # elif (reservation or binned or bubble or window) and average:
-        # chartRunningAverage(inputpath, outputfile, outJobsCSV)
-
-    #     iterateReservations(
-    #         inputpath,
-    #         outputfile,
-    #         outJobsCSV,
-    #         verbosity,
-    #         binned,
-    #         bubble,
-    #         reservation,
-    #         window,
-    #     )
-
-    # # If you only want average
-    # elif average and not (reservation or binned or bubble or window):
-    #     chartRunningAverage(inputpath, outputfile, outJobsCSV)
 
     elif timeline:
         chartTimeline(

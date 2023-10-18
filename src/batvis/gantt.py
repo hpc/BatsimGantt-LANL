@@ -288,7 +288,6 @@ def plotBinnedGanttReservations(row, totaldf, outDir, res_bounds, verbosity, max
         print(cut_js)
     if checkForJobs(totalDf):
         smallJs, longJs, largeJs = binDfToJs(totalDf)
-        print("testing")
         saveDfPlot(
             smallJs,
             getFileName(

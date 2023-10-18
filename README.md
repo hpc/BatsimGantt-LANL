@@ -23,8 +23,10 @@ you can run it with as many or as few options as you want. For example, to only 
 
 The options are detailed below:
 
-| Option | Description |
-| --- | --- |
-| -r | Gantt charts for each reservation |
-| -s | Bubble plots for each reservation |
-| -w | Gantt charts generated for a window containing 4 reservations |
+| Option | Description                                                   |
+|--------|---------------------------------------------------------------|
+| -r     | Gantt charts for each reservation                             |
+| -s     | Bubble plots for each reservation                             |
+| -b     | Binned plot for each reservation                              |
+| -w     | Gantt charts generated for a window containing 4 reservations |
+| -t     | Timeline plot                                                 |
