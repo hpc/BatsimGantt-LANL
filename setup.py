@@ -30,12 +30,5 @@ setup(
         "yaspin",
         "pandas",
     ],
-    entry_points={
-        "console_scripts": [
-            "runbatvis=batvis:main",
-        ],
-    },
-    # packages=find_packages(include=['prompt-toolkit', 'Click'])
-    # install_requires=['prompt-toolkit', 'Click']
     python_requires=">=3.6",
 )
