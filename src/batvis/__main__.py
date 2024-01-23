@@ -1,7 +1,7 @@
 # coding: utf-8
 """
 Usage:
-    python3 main.py -i <inputpath> [-o <outputfile>] [-r <y/N>] [-v <y/N>] [-b <y/N] [-a <y/N>] [-s <y/N>] [-w <y/N>]
+    python3 main.py -i <inputpath> [-o <outputfile>] [-r <y/N>] [-v <y/N>] [-b <y/N] [-s <y/N>] [-w <y/N>]
 
 Required Options:
     -i <inputpath>    The run directory of the experiment. Eventually this will be the experiment's root directory. Try to use absolute paths, for some reason this doesnt like ~ for homedirs
@@ -11,7 +11,6 @@ Optional options:
     -r <y/n>    Prompts this program to look for and utilize reservations when creating the output charts 
     -v <y/N>    verbose operation.
     -b <y/N>    Bin reservations by size
-    -a <y/N>    Plot average utilization plot
     -s <y/N>    Plot bubble chart
     -w <y/N>    Windowed Gantt Chart
 
@@ -30,16 +29,24 @@ def main(argv):
     reservation = False
     verbosity = False
     binned = False
-    average = False
     bubble = False
     window = False
     timeline = False
+
+    # # TODO STUB THIS FOR DEBUGGING
+    # inputpath="/Users/vhafener/Experiments/110822/Steve_reservations_90k_tests/12_full_100exp/experiment_1/id_1400/Run_1"
+    # outputfile="/tmp/testing"
+    # reservation=True
+    # window=True
+    # bubble=True
+    # binned=True
+    # timeline=True
 
     # Parse the arguments passed in
     try:
         opts, args = getopt.getopt(
             argv,
-            "hi:o:r:v:b:a:s:w:t:",
+            "hi:o:r:v:b:s:w:t:",
             [
                 "ipath=",
                 "ofile=",
