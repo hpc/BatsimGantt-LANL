@@ -3,7 +3,7 @@ Batvis is a tool to assist in the generation of a variety of plots from data pro
 ## Installation
 Note: Installation assumes that you are already using the batsim4 repo from [here]() configured with the batsched4 repo from [here]().
 
-1. Clone this repo and the evalys repo from [here](https://gitlab.newmexicoconsortium.org/lanl-ccu/evalys). 
+1. Clone this repo and the evalys repo from [here](https://github.com/hpc/Evalys-LANL). 
 2. Run `pip install ./evalys && pip install ./batsimGantt` to install both the modified evalys library and this program
 
 ## Usage

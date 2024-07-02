@@ -34,13 +34,13 @@ def main(argv):
     timeline = False
 
     # # TODO STUB THIS FOR DEBUGGING
-    # inputpath="/Users/vhafener/Experiments/110822/Steve_reservations_90k_tests/12_full_100exp/experiment_1/id_1400/Run_1"
-    # outputfile="/tmp/testing"
-    # reservation=True
-    # window=True
-    # bubble=True
-    # binned=True
-    # timeline=True
+    inputpath="/Users/vhafener/Experiments/110822/Steve_reservations_90k_tests/12_full_100exp/experiment_1/id_1400/Run_1"
+    outputfile="/tmp/testing"
+    reservation=True
+    window=True
+    bubble=True
+    binned=True
+    timeline=True
 
     # Parse the arguments passed in
     try:
