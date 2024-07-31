@@ -2,7 +2,7 @@
 
 Copyright Notice
 ----------------
-LiveGantt authored by Vivian Hafener. Copyright © 2024 Triad National Security, LLC.
+BatsimGantt authored by Vivian Hafener. Copyright © 2024 Triad National Security, LLC.
 Release Approved Under O#4697 - LANL-contributed enhancements to BatSim toolstack.
 
 BatsimGantt is a tool to assist in the generation of a variety of plots from data produced by our modified version of the batsim program. This tool is intended to be run from the command line, and can be scripted through the use of bash scripts. This tool pulls information from the config files of a batsim experiment run, then charts the jobs based on the information in the out_jobs.csv file. As the program traverses the expected directory structure of our batsim outputs, there is no need to specifically pull these files out; instead just point batvis at the directory for the "run" of batsim. 
